@@ -56,7 +56,8 @@ for (int i = 0; i < sizeof(input); i++){
   if (input[i] == '&'){
 printf("ignore &");
     }
-    
+    printf("hello world");
+
 
   }
 
