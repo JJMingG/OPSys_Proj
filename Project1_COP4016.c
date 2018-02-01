@@ -52,14 +52,30 @@ printf(" =>");
 }
 
 void ParseIt(char* input){
-  char cmdarray[35];
+  char cmdarray[256] = {' '};
   int cmd_array_counter = 0;
 for (int i = 0; i < strlen(input); i++){
-  if (input[i] == '&'){
+  if (input[0] == '&'){
     i++;
   }
-if(input[i] == '|' ||input[i] == '<' || input[i] == '>' || input[i] == '&'){ //checks that its a command and not a special character
-printf("special char found");
+if(input[i] == '|' ||input[i] == '<' || input[i] == '>' || input[i] == '&'){
+  if(input[i - 1] == ' '){
+//cmdarray[cmd_array_counter - 1] = '*';
+cmdarray[cmd_array_counter] = input[i];
+cmd_array_counter++;
+//printf("this ran");
+  }
+  else{
+cmdarray[cmd_array_counter] =  '*';
+cmdarray[++cmd_array_counter] = input[i];
+if(&input[i + 1] == NULL){
+break;
+}
+else{
+cmdarray[++cmd_array_counter] = '*';
+}
+cmd_array_counter++;
+  }
 }
 else{
   cmdarray[cmd_array_counter] = input[i];
@@ -68,30 +84,6 @@ cmdarray[cmd_array_counter] = '*';
   }
   cmd_array_counter++;
 }
-printf("%s", cmdarray);
-        printf("%d\n",i);
     }
+    printf("%s", cmdarray);
 }
-
-
-
-
-
-
-
-
-
-
-
-//while(input[i] != ' '){
-//cmdarray[cmd_array_counter] = input[i]; // throw cmd into array
-//printf("%s", cmdarray);
-//cmd_array_counter++;
-//i++;
-//}
-//if (input[i + 1]  == '|' ){
-
-
-
-  //      }
-      //}
