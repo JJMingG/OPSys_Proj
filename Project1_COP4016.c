@@ -5,7 +5,7 @@
 #include <sys/utsname.h>
 
 void ParseIt(char* input);
-main()
+int main()
 {
   char *name;
   char input[26]; // array for user input
@@ -32,7 +32,7 @@ while (strcmp(input, "exit") != 0){ //checks for exit cmd
 //  getcwd(direc, sizeof(direc)); // ignore for now
   cuserid(name);
 fgets(input, 25, stdin);
-printf("%s", input);
+//printf("%s", input);
 ParseIt(input); // calls parsing function seen below
 printf ("%s", name);
 printf("@");
@@ -54,24 +54,44 @@ printf(" =>");
 void ParseIt(char* input){
   char cmdarray[35];
   int cmd_array_counter = 0;
-for (int i = 0; i < sizeof(input); i++){
+for (int i = 0; i < strlen(input); i++){
   if (input[i] == '&'){
     i++;
   }
-else if(input[i] != '|' ||input[i] != '<' || input[i] != '>' || input[i] != '&'){ //checks that its a command and not a special character
-while(input[i] != ' '){
-char cmdarray[cmd_array_counter] = input[i]; // throw cmd into array
-cmd_array_counter++;
-if (input[i + 1]  == '|' ){
-
-
-
+if(input[i] == '|' ||input[i] == '<' || input[i] == '>' || input[i] == '&'){ //checks that its a command and not a special character
+printf("special char found");
 }
-}
-
-}
+else{
+  cmdarray[cmd_array_counter] = input[i];
+  if (input[i] == ' '){
+cmdarray[cmd_array_counter] = '*';
   }
-
-
-
+  cmd_array_counter++;
 }
+printf("%s", cmdarray);
+        printf("%d\n",i);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+//while(input[i] != ' '){
+//cmdarray[cmd_array_counter] = input[i]; // throw cmd into array
+//printf("%s", cmdarray);
+//cmd_array_counter++;
+//i++;
+//}
+//if (input[i + 1]  == '|' ){
+
+
+
+  //      }
+      //}
