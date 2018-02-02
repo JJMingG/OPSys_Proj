@@ -86,7 +86,7 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
 }
     }
    //performs any of the environment variable needs if there are any
-  printf("%s\n", cmdarray); // print statement for confirmation of correct parsing
+  printf("%s", cmdarray); // print statement for confirmation of correct parsing
   envvar(cmdarray);
 }
 
@@ -96,13 +96,21 @@ int a = 0;
 for (int i = 0; i < strlen(cmdarray); i++){
   if(cmdarray[i] == '$'){
     for (int b = i; b < strlen(cmdarray); b++){
-      if(cmdarray[b] == '*' || cmdarray[b] == ' '){ \\PARSE out the env_var so you can look it up using getenv
+      if(cmdarray[b] == '*' || cmdarray[b] == ' '){ //PARSE out the env_var so you can look it up using getenv
         break;
             }
-      env_var[a] = cmdarray[b];
+      env_var[a] = cmdarray[b + 1]; //
       a++;
       }
     }
   }
- printf("%s", env_var);
+   printf("%s", env_var);
+char *value;
+char* env_value;
+for(int i = 0;i < strlen(env_var) - 1; i++) {
+value[i] = env_var[i]; //
+ }
+ printf("%s", value);
+ env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
+  //JUst print out env_value
 }
