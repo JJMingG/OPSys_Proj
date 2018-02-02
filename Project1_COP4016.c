@@ -4,8 +4,11 @@
 #include <stdlib.h>
 #include <sys/utsname.h>
 
+
 void ParseIt(char* input);
 void envvar(char *cmdarray);
+void Path_Res(char *cmdarray);
+char *strrev(char *str);
 int main()
 {
   char *name;
@@ -88,6 +91,7 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
    //performs any of the environment variable needs if there are any
   printf("%s", cmdarray); // print statement for confirmation of correct parsing
   envvar(cmdarray);
+  Path_Res(cmdarray);
 }
 
 void envvar(char *cmdarray){
@@ -99,7 +103,7 @@ for (int i = 0; i < strlen(cmdarray); i++){
       if(cmdarray[b] == '*' || cmdarray[b] == ' '){ //PARSE out the env_var so you can look it up using getenv
         break;
             }
-      env_var[a] = cmdarray[b + 1]; //
+      env_var[a] = cmdarray[b + 1];
       a++;
       }
     }
@@ -108,9 +112,159 @@ for (int i = 0; i < strlen(cmdarray); i++){
 char *value;
 char* env_value;
 for(int i = 0;i < strlen(env_var) - 1; i++) {
-value[i] = env_var[i]; //
+value[i] = env_var[i]; //have to get rid of null character because its a c string
  }
  printf("%s", value);
  env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
   //JUst print out env_value
+}
+
+void Path_Res(char *cmdarray){
+  printf("%s", cmdarray);
+  char newpath[250] = {};
+  char cwd[200] = {};
+  char parendir[200] = {};
+  int trackerforparen = 0;
+  int backslashtrack = 0;
+  for (int i = 0; i < strlen(cmdarray); i++){
+    if(cmdarray[i] == '.'){
+    //DO nothing since we're already in this current directory
+    }
+    if(cmdarray[i] == '.' && cmdarray[i+1] == '.'){
+      for (int b = 0; b < strlen(cmdarray); b++){
+      newpath[b] = cmdarray[i + 2];
+      if(cmdarray[i] == '*' || cmdarray[i] == ' ' || &cmdarray[i] == NULL){
+        break;
+            }
+            i++;//remove first to top dots
+          }
+          printf("%s", newpath);
+         if (getcwd(cwd, sizeof(cwd)) == NULL){
+            perror("getcwd() error");
+           }
+          else{
+           //printf( "%s", cwd);
+          //fprintf(stdout, "%s", direc);
+        }
+        for(int i = strlen(cwd) - 1; i > 0; i--){
+            parendir[trackerforparen] = cwd[i]; //get currentdir and parent directory
+            trackerforparen++;
+            if(cwd[i] == '/'){
+              ++backslashtrack;
+            }
+            if (backslashtrack == 2){
+              break;
+            }
+        }
+        printf("this ran");
+        printf("%s\n", cwd);
+        strrev(parendir);
+        printf("%s", parendir);
+        strcat(parendir, newpath);
+        printf("%s", newpath);
+      }
+    if(cmdarray[i] == '~'){
+
+//replace beginning with $HOME environmental variable
+
+    }
+    if(cmdarray[i] == '/'){
+
+
+    }
+    if(cmdarray[i] == '&' || cmdarray[i] == '<' || cmdarray[i] == '*' || cmdarray[i] == '>'){
+        i++;
+    }
+    else{
+//Make this look and see if it a is a lone file, if not check it its one of the four commands io, echo, exit or etime
+// If none of those signal a file not found error
+
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+char *strrev(char *str)
+{
+    int i = strlen(str) - 1, j = 0;
+
+    char ch;
+    while (i > j)
+    {
+        ch = str[i];
+        str[i] = str[j];
+        str[j] = ch;
+        i--;
+        j++;
+    }
+    return str;
 }
