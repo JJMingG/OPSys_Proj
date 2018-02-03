@@ -120,7 +120,7 @@ value[i] = env_var[i]; //have to get rid of null character because its a c strin
 }
 
 void Path_Res(char *cmdarray){
-  printf("%s", cmdarray);
+  //printf("%s", cmdarray);
   char newpath[250] = {};
   char cwd[200] = {};
   char parendir[200] = {};
@@ -138,7 +138,7 @@ void Path_Res(char *cmdarray){
             }
             i++;//remove first to top dots
           }
-          printf("%s", newpath);
+          //printf("%s", newpath);
          if (getcwd(cwd, sizeof(cwd)) == NULL){
             perror("getcwd() error");
            }
@@ -156,12 +156,14 @@ void Path_Res(char *cmdarray){
               break;
             }
         }
-        printf("this ran");
-        printf("%s\n", cwd);
+        //printf("this ran");
+        //printf("%s\n", cwd);
         strrev(parendir);
-        printf("%s", parendir);
-        strcat(parendir, newpath);
-        printf("%s", newpath);
+      //  printf("%s", parendir);
+        strcat(parendir, newpath); //newpath now contains the file pathway you need for whatever your function
+        //you're using it for 
+        //printf("%s", newpath);
+
       }
     if(cmdarray[i] == '~'){
 
