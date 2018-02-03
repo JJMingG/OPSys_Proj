@@ -8,6 +8,9 @@
 void ParseIt(char* input);
 void envvar(char *cmdarray);
 void Path_Res(char *cmdarray);
+void pipeexe(char *cmdarray);
+void redirection(char *cmdarray);
+void execution(char *cmdarray);
 char *strrev(char *str);
 int main()
 {
@@ -55,6 +58,7 @@ printf(" =>");
 }
 
 void ParseIt(char* input){
+  int hasPipe = 0, hasRedir = 0; // check signals for if there is pipelining or redirection
   char cmdarray[256] = {' '};
   int cmd_array_counter = 0;
 for (int i = 0; i < strlen(input); i++){// loop through the entire input in order to parse
@@ -62,6 +66,13 @@ for (int i = 0; i < strlen(input); i++){// loop through the entire input in orde
     i++;
   }
 if(input[i] == '|' ||input[i] == '<' || input[i] == '>' || input[i] == '&'){ // look for special characters
+
+/* Checks for pipelines and redirections */
+  if(input[i] == '|')
+	hasPipe++;
+  else if(input[i] == '<' || input[i] == '>') //using else if because we can assume pipes and I/O redirection wont occur together
+	hasRedir++;
+
   if(input[i - 1] == ' '){
 //cmdarray[cmd_array_counter - 1] = '*';
 cmdarray[cmd_array_counter] = input[i];
@@ -92,6 +103,19 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
   printf("%s", cmdarray); // print statement for confirmation of correct parsing
   envvar(cmdarray);
   Path_Res(cmdarray);
+
+  /* Execution process commands */
+  if(hasPipe > 0)
+	pipeexe(cmdarray);
+  else if(hasRedir > 0)
+	redirection(cmdarray);
+  else
+	execution(cmdarray);
+  /* Because pipelining and redirection both needs execution, it is better off sending them to their own function
+   * to do their respective parts and then call execution. Built-in functions and background processing will also
+   * need execution, and will need to be created within the execution function.
+   */
+
 }
 
 void envvar(char *cmdarray){
@@ -183,7 +207,17 @@ void Path_Res(char *cmdarray){
   }
 }
 
+void pipeexe(char *cmdarray){
 
+}
+
+void redirection(char *cmdarray){
+
+}
+
+void execution(char *cmdarray){
+
+}
 
 
 
