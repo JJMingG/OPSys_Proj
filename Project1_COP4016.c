@@ -61,9 +61,11 @@ void ParseIt(char* input){
   int hasPipe = 0, hasRedir = 0; // check signals for if there is pipelining or redirection
   char cmdarray[256] = {' '};
   int cmd_array_counter = 0;
+  int amp_counter = 0;
 for (int i = 0; i < strlen(input); i++){// loop through the entire input in order to parse
-  if (input[0] == '&'){
-    i++;
+  if (input[0] == '&' && amp_counter == 0){
+    ++amp_counter;
+    continue;
   }
 if(input[i] == '|' ||input[i] == '<' || input[i] == '>' || input[i] == '&'){ // look for special characters
 
@@ -133,14 +135,14 @@ for (int i = 0; i < strlen(cmdarray); i++){
     }
   }
    printf("%s", env_var);
-char *value;
-char* env_value;
+char value[150] = {' '};
+char *env_value;
 for(int i = 0;i < strlen(env_var) - 1; i++) {
 value[i] = env_var[i]; //have to get rid of null character because its a c string
  }
  printf("%s", value);
  env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
-  //JUst print out env_value
+  //printf(env_value);
 }
 
 void Path_Res(char *cmdarray){
@@ -185,7 +187,7 @@ void Path_Res(char *cmdarray){
         strrev(parendir);
       //  printf("%s", parendir);
         strcat(parendir, newpath); //newpath now contains the file pathway you need for whatever your function
-        //you're using it for 
+        //you're using it for
         //printf("%s", newpath);
 
       }
