@@ -255,38 +255,46 @@ void pipeexe(char *cmdarray, int size){
 	}
 
 	/* Implementation */
-/* Skeleton of the implementation straight from the book. Commented out for now
+/* Skeleton of the implementation straight from the book. Commented out for now 
 	int fd[2];
 
-	if(for() == 0){
-		// Child (cmd1 | cmd2)
-		pipe(fd);
+	for(int i = 1; i < size + 1; i++){
 		if(fork() == 0){
-			// cmd1 (Writer)
-			close(STDOUT_FILENO);
-			dup(fd[i]);
-			close(fd[0]);
-			close(fd[1]);
-			// Execute Command (use command function)
+			// Child (cmd1 | cmd2)
+			pipe(fd);
+			if(fork() == 0){ // fork == 0 is in child process
+				// cmd1 (Writer)
+				close(STDOUT_FILENO);
+				dup(fd[1]);
+				close(fd[0]);
+				//close(fd[1]);
+				// Execute Command (use command function)
+				printf("Child Execution: cmds[i] using cmds[i - 1] (%s): %s\n", cmds[i - 1], cmds[i]);
+			}
+			else{ // fork > 0 is in parent process, fork < 0 is error
+				// cmd2 (Reader)
+				close(STDIN_FILENO);
+				dup(fd[0]);
+				//close(fd[0]);
+				close(fd[1]);
+				// Execute Command (use command function)
+				printf("Parent Execution: cmds[i - 1]: %s\n", cmds[i - 1]);
+			}
 		}
 		else{
-			// cmd2 (Reader)
-			close(STDIN_FILENO);
-			dup(fd[0]);
-			close(fd[0]);
-			close(fd[1]);
-			// Execute Command (use command function)
+			// Parent (Shell)
+			//close(fd[0]);
+			//close(fd[1]);
+			close(fd);
+			printf("IN PARENT SHELL and i is %d\n", i);
+			//waitpid();
 		}
-	}
-	else{
-		// Parent (Shell)
-		close(fd);
 	}
 */
 	/* TEST AREA */
-	for(int i = 0; i < size + 1; i++)
+/*	for(int i = 0; i < size + 1; i++)
 		printf("%s\nlength: %d\n", cmds[i], strlen(cmds[i]));
-
+*/
 	/* Clean-up */
 	for(int i = 0; i < size + 1; i++)
 		free(cmds[i]); // not sure if free(cmds) would free these too
