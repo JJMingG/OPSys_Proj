@@ -8,14 +8,14 @@
 void ParseIt(char* input);
 void envvar(char *cmdarray);
 void Path_Res(char *cmdarray);
-void pipeexe(char *cmdarray);
+void pipeexe(char *cmdarray, int size);
 void redirection(char *cmdarray);
 void execution(char *cmdarray);
 char *strrev(char *str);
 int main()
 {
   char *name;
-  char input[26]; // array for user input
+  char input[226]; // array for user input
   char cwd[200]; // array for hold current directory
   name=(char *)malloc(10*sizeof(char));
   struct utsname uData;
@@ -38,7 +38,7 @@ int main()
 while (strcmp(input, "exit") != 0){ //checks for exit cmd
 //  getcwd(direc, sizeof(direc)); // ignore for now
   cuserid(name);
-fgets(input, 25, stdin);
+fgets(input, 225, stdin);
 ParseIt(input); // calls parsing function seen below
 printf ("%s", name);
 printf("@");
@@ -101,23 +101,27 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
   cmd_array_counter++;
 }
     }
+
    //performs any of the environment variable needs if there are any
   printf("%s", cmdarray); // print statement for confirmation of correct parsing
   envvar(cmdarray);
   Path_Res(cmdarray);
 
   /* Execution process commands */
-  if(hasPipe > 0)
-	pipeexe(cmdarray);
-  else if(hasRedir > 0)
+  if(hasPipe > 0){
+	pipeexe(cmdarray, hasPipe);
+	hasPipe = 0;
+  }
+  else if(hasRedir > 0){
 	redirection(cmdarray);
+	hasRedir = 0;
+  }
   else
 	execution(cmdarray);
   /* Because pipelining and redirection both needs execution, it is better off sending them to their own function
    * to do their respective parts and then call execution. Built-in functions and background processing will also
    * need execution, and will need to be created within the execution function.
    */
-
 }
 
 void envvar(char *cmdarray){
@@ -140,7 +144,7 @@ char *env_value;
 for(int i = 0;i < strlen(env_var) - 1; i++) {
 value[i] = env_var[i]; //have to get rid of null character because its a c string
  }
- printf("%s", value);
+ printf("%s\n", value);
  env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
   //printf(env_value);
 }
@@ -211,8 +215,92 @@ void Path_Res(char *cmdarray){
   }
 }
 
-void pipeexe(char *cmdarray){
+void pipeexe(char *cmdarray, int size){
+	printf("In pipe function\n");
+	/* parse based on pipelines */
+	char ** cmds;
+	cmds = (char **)malloc(sizeof(char *) * (size + 1));
+	int * index = (int*)malloc(sizeof(int) * (size + 2));
+	int * spaces = (int*)malloc(sizeof(int) * (size + 1));
+	index[0] = -1;
+	index[size + 1] = strlen(cmdarray) - 1;
+	int indexcount = 1, spacecount = 0;
 
+	for(int i = 0; i < strlen(cmdarray); i++){ // finds index of pipelines to parse
+		if(cmdarray[i] == '*') // counts number of spaces between each pipe
+			spacecount++;
+		if(cmdarray[i] == '|'){
+			index[indexcount] = i;
+			indexcount++;
+			spaces[indexcount - 2] = spacecount;
+			spacecount = 0;
+		}
+	}
+	spaces[size] = spacecount; 
+	
+	for(int i = 0; i < size + 1; i++){
+		cmds[i] = (char *)malloc(sizeof(char) * (index[i + 1] - index[i] + 1));
+		strncpy(cmds[i], &cmdarray[index[i] + 1], (index[i + 1] - index[i] - 1));
+		cmds[i][index[i + 1] - index[i] - 1] = '\0'; // null terminating
+	}
+	index[0] = 0; 
+	/* end of parsing pipelines */
+
+	/* Error checking */
+	for(int i = 0; i < size + 1; i++){
+		if(index[i + 1] - index[i] - spaces[i] <= 1){ // Doesn't work for 1 letter commands but there shudnt be such a thing anyways
+			printf("Error: syntax error with pipes. Exiting...\n");
+			exit(1);
+		}
+	}
+
+	/* Implementation */
+/* Skeleton of the implementation straight from the book. Commented out for now 
+	int fd[2];
+
+	for(int i = 1; i < size + 1; i++){
+		if(fork() == 0){
+			// Child (cmd1 | cmd2)
+			pipe(fd);
+			if(fork() == 0){ // fork == 0 is in child process
+				// cmd1 (Writer)
+				close(STDOUT_FILENO);
+				dup(fd[1]);
+				close(fd[0]);
+				//close(fd[1]);
+				// Execute Command (use command function)
+				printf("Child Execution: cmds[i] using cmds[i - 1] (%s): %s\n", cmds[i - 1], cmds[i]);
+			}
+			else{ // fork > 0 is in parent process, fork < 0 is error
+				// cmd2 (Reader)
+				close(STDIN_FILENO);
+				dup(fd[0]);
+				//close(fd[0]);
+				close(fd[1]);
+				// Execute Command (use command function)
+				printf("Parent Execution: cmds[i - 1]: %s\n", cmds[i - 1]);
+			}
+		}
+		else{
+			// Parent (Shell)
+			//close(fd[0]);
+			//close(fd[1]);
+			close(fd);
+			printf("IN PARENT SHELL and i is %d\n", i);
+			//waitpid();
+		}
+	}
+*/
+	/* TEST AREA */
+/*	for(int i = 0; i < size + 1; i++)
+		printf("%s\nlength: %d\n", cmds[i], strlen(cmds[i]));
+*/
+	/* Clean-up */
+	for(int i = 0; i < size + 1; i++)
+		free(cmds[i]); // not sure if free(cmds) would free these too
+	free(index);
+	free(spaces);
+	free(cmds);
 }
 
 void redirection(char *cmdarray){
@@ -220,6 +308,7 @@ void redirection(char *cmdarray){
 }
 
 void execution(char *cmdarray){
+// Background Processing and Built-ins will need to be implemented here i believe
 
 }
 
