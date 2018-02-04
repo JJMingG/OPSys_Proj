@@ -185,10 +185,10 @@ void Path_Res(char *cmdarray){
         //printf("this ran");
         //printf("%s\n", cwd);
         strrev(parendir);
-      //  printf("%s", parendir);
+       printf("%s", parendir);
         strcat(parendir, newpath); //newpath now contains the file pathway you need for whatever your function
         //you're using it for
-        //printf("%s", newpath);
+        printf("%s", newpath);
 
       }
     if(cmdarray[i] == '~'){
