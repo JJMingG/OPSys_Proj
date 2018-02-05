@@ -62,7 +62,7 @@ if (getcwd(cwd, sizeof(cwd)) == NULL){
         }
 printf(" =>");
     }
-
+	return 0;
 }
 
 void ParseIt(char* input){
@@ -263,14 +263,15 @@ void pipeexe(char *cmdarray, int size){
 	}
 
 	/* Implementation */
-/* Skeleton of the implementation straight from the book. Commented out for now 
+/* Skeleton of the implementation straight from the book. Commented out for now */
 	int fd[2];
+	int pid, pid2;
 
 	for(int i = 1; i < size + 1; i++){
-		if(fork() == 0){
+		if(pid = fork() == 0){
 			// Child (cmd1 | cmd2)
 			pipe(fd);
-			if(fork() == 0){ // fork == 0 is in child process
+			if(pid2 = fork() == 0){ // fork == 0 is in child process
 				// cmd1 (Writer)
 				close(STDOUT_FILENO);
 				dup(fd[1]);
@@ -279,8 +280,8 @@ void pipeexe(char *cmdarray, int size){
 				// Execute Command (use command function)
 				printf("Child Execution: cmds[i] using cmds[i - 1] (%s): %s\n", cmds[i - 1], cmds[i]);
 			}
-			else if(fork() < 0){ // for < 0 is error
-				perror("fork");
+			else if(pid2 < 0){ // for < 0 is error
+				perror("fork2");
 				exit(1);
 			}
 			else{ // fork > 0 is in parent process
@@ -293,6 +294,10 @@ void pipeexe(char *cmdarray, int size){
 				printf("Parent Execution: cmds[i - 1]: %s\n", cmds[i]);
 			}
 		}
+		else if(pid < 0){
+			perror("fork1");
+			exit(1);
+		}
 		else{
 			// Parent (Shell)
 			//close(fd[0]);
@@ -302,7 +307,7 @@ void pipeexe(char *cmdarray, int size){
 			//waitpid();
 		}
 	}
-*/
+/**/
 	/* TEST AREA */
 /*	for(int i = 0; i < size + 1; i++)
 		printf("%s\nlength: %d\n", cmds[i], strlen(cmds[i]));
@@ -332,9 +337,12 @@ int B_exit(char *args){
 
 void cd(char **args){
 	// This function is assuming an array of char arrays is passed in
-	if(args[1] == NULL) // If no args, $HOME is the arg
-		args[1] = "$HOME";
+	if(args[1] == NULL){ // If no args, $HOME is the arg
+		//char * home = "$HOME"; // String for $HOME
+		//strcpy(args[1], envvar(home)); // Pass through env_var and copy to args[1]
+	}
 	else{ // Signals error if target is not a directory
+		//strcpy(args[1], Path_Res(args[1])); // pass arg to get path resolution
 		if(chdir(args[1]) != 0)
 			perror("Not a directory");
 	}
