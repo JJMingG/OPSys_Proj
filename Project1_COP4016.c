@@ -8,17 +8,17 @@
 void ParseIt(char* input);
 char* envvar(char *cmdarray);
 void Path_Res(char *cmdarray);
-void pipeexe(char *cmdarray, int size);
-void redirection(char *cmdarray);
+void pipeexe(char **cmdline, int size, int numpipes);
+void redirection(char **cmdline, int size);
 void execution(char *cmdarray);
 char *strrev(char *str);
 
 // Built-ins
-int B_exit(char *args);
-void cd(char **args);
-void echo(char *args);
-void etime(char *args);
-void io(char *args);
+int B_exit(char **args, int size);
+void cd(char **args, int size);
+void echo(char **args, int size);
+void etime(char **args, int size);
+void io(char **args, int size);
 
 int main()
 {
@@ -141,6 +141,8 @@ for(int i = looker; i < strlen(cmdarray); i++){
 cmdline[size] = temp;
 printf("%c\n", cmdline[size]);
 size++;
+
+
 }
 
    //performs any of the environment variable needs if there are any
@@ -149,18 +151,18 @@ size++;
 
   /* Execution process commands */
   if(hasPipe > 0){
-	pipeexe(cmdarray, hasPipe);
+	pipeexe(cmdline, size, hasPipe);
 	hasPipe = 0;
   }
   else if(hasRedir > 0){
-	redirection(cmdarray);
+	redirection(cmdline, size);
 	hasRedir = 0;
   }
   else
 	execution(cmdarray);
   /* Because pipelining and redirection both needs execution, it is better off sending them to their own function
    * to do their respective parts and then call execution. Built-in functions and background processing will also
-   * need execution, and will need to be created within the execution function.
+   * need execution.
    */
 }
 
@@ -256,9 +258,25 @@ void Path_Res(char *cmdarray){
   }
 }
 
-void pipeexe(char *cmdarray, int size){
+void pipeexe(char **cmdline, int size, int numpipes){
 	printf("In pipe function\n");
 	/* parse based on pipelines */
+/*	char *** cmds;
+	int index[numpipes];
+	int indexcounter = 0;
+	char * pipelinechar = "|";
+
+	for(int i = 0; i < size; i++)
+	{
+		printf("Checking args: %s", cmdline[i]);
+		if(strcmp(cmdline[i], pipelinechar) == 0){
+			index[indexcounter] = i;
+			indexcounter++;
+			printf("Pipeline at %d", i);
+		}
+	}
+*/
+/*
 	char ** cmds;
 	cmds = (char **)malloc(sizeof(char *) * (size + 1));
 	int * index = (int*)malloc(sizeof(int) * (size + 2));
@@ -285,16 +303,17 @@ void pipeexe(char *cmdarray, int size){
 		cmds[i][index[i + 1] - index[i] - 1] = '\0'; // null terminating
 	}
 	index[0] = 0;
+*/
 	/* end of parsing pipelines */
 
-	/* Error checking */
+	/* Error checking 
 	for(int i = 0; i < size + 1; i++){
 		if(index[i + 1] - index[i] - spaces[i] <= 1){ // Doesn't work for 1 letter commands but there shudnt be such a thing anyways
 			printf("Error: syntax error with pipes. Exiting...\n");
 			exit(1);
 		}
 	}
-
+*/
 	/* Implementation */
 /* Skeleton of the implementation straight from the book. Commented out for now
 	int fd[2];
@@ -345,15 +364,16 @@ void pipeexe(char *cmdarray, int size){
 /*	for(int i = 0; i < size + 1; i++)
 		printf("%s\nlength: %d\n", cmds[i], strlen(cmds[i]));
 */
-	/* Clean-up */
+	/* Clean-up 
 	for(int i = 0; i < size + 1; i++)
 		free(cmds[i]); // not sure if free(cmds) would free these too
 	free(index);
 	free(spaces);
 	free(cmds);
+*/
 }
 
-void redirection(char *cmdarray){
+void redirection(char **cmdline, int size){
 
 }
 
@@ -363,12 +383,12 @@ void execution(char *cmdarray){
 }
 
 /* Built-ins */
-int B_exit(char *args){
+int B_exit(char **args, int size){
 	printf("Exiting Shell....");
 	return 0;
 }
 
-void cd(char **args){
+void cd(char **args, int size){
 	// This function is assuming an array of char arrays is passed in
 	if(args[1] == NULL){ // If no args, $HOME is the arg
 		//char * home = "$HOME"; // String for $HOME
@@ -381,7 +401,7 @@ void cd(char **args){
 	}
 }
 
-void echo(char *args){
+void echo(char **args, int size){
 	//outputs whatever user specifies
 	//for each argument:
 		//look up the argument in the list of environment variables
@@ -389,7 +409,7 @@ void echo(char *args){
 		//signal an error if it does not exist
 }
 
-void etime(char *args){
+void etime(char **args, int size){
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 
@@ -400,7 +420,7 @@ void etime(char *args){
 	// Not sure if subtracting the microseconds will return a negative at times?
 }
 
-void io(char *args){
+void io(char **args, int size){
 
 }
 
