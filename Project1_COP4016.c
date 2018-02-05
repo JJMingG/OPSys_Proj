@@ -6,7 +6,7 @@
 #include <sys/time.h>
 
 void ParseIt(char* input);
-void envvar(char *cmdarray);
+char* envvar(char *cmdarray);
 void Path_Res(char *cmdarray);
 void pipeexe(char *cmdarray, int size);
 void redirection(char *cmdarray);
@@ -139,12 +139,12 @@ for(int i = looker; i < strlen(cmdarray); i++){
   }
   //printf("%s\n", temp);
 cmdline[size] = temp;
-//printf("%s\n", cmdline[size]);
+printf("%c\n", cmdline[size]);
 size++;
 }
+
    //performs any of the environment variable needs if there are any
 //  printf("%s", cmdarray); // print statement for confirmation of correct parsing
-  envvar(cmdarray);
   Path_Res(cmdarray);
 
   /* Execution process commands */
@@ -164,7 +164,7 @@ size++;
    */
 }
 
-void envvar(char *cmdarray){
+char* envvar(char *cmdarray){
 char env_var[20] = {' '};
 int a = 0;
 for (int i = 0; i < strlen(cmdarray); i++){
@@ -187,6 +187,7 @@ value[i] = env_var[i]; //have to get rid of null character because its a c strin
  printf("%s\n", value);
  env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
   //printf(env_value);
+  return env_value;
 }
 
 void Path_Res(char *cmdarray){
