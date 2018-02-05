@@ -6,7 +6,7 @@
 #include <sys/time.h>
 
 void ParseIt(char* input);
-void envvar(char *cmdarray);
+char* envvar(char *cmdarray);
 void Path_Res(char *cmdarray);
 void pipeexe(char *cmdarray, int size);
 void redirection(char *cmdarray);
@@ -109,10 +109,42 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
   cmd_array_counter++;
 }
     }
+    printf("%s", cmdarray);
+    char ** cmdline;
+    char * temp;
+    int checker = 0;
+    int looker = 0;
+    int looker_two = 0;
+    int size = 0;
+    int test = 0;
+    cmdline = (char **)calloc(strlen(cmdarray), sizeof(char *));
+    temp = (char *)calloc(strlen(cmdarray), sizeof(char));
+while(test == 0){
+for(int i = looker; i < strlen(cmdarray); i++){
+  if(i == strlen(cmdarray) || i  == (strlen(cmdarray) - 1)){
+    printf("This ran");
+    test = 1;
+  }
+  if(cmdarray[i] == '*'){
+    checker = 0;
+    ++looker;
+    break;
+  }
+  else
+  {
+    temp[checker] = cmdarray[i];
+    checker++;
+  }
+  looker++;
+  }
+  //printf("%s\n", temp);
+cmdline[size] = temp;
+printf("%c\n", cmdline[size]);
+size++;
+}
 
    //performs any of the environment variable needs if there are any
-  printf("%s", cmdarray); // print statement for confirmation of correct parsing
-  envvar(cmdarray);
+//  printf("%s", cmdarray); // print statement for confirmation of correct parsing
   Path_Res(cmdarray);
 
   /* Execution process commands */
@@ -132,7 +164,7 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
    */
 }
 
-void envvar(char *cmdarray){
+char* envvar(char *cmdarray){
 char env_var[20] = {' '};
 int a = 0;
 for (int i = 0; i < strlen(cmdarray); i++){
@@ -155,6 +187,7 @@ value[i] = env_var[i]; //have to get rid of null character because its a c strin
  printf("%s\n", value);
  env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
   //printf(env_value);
+  return env_value;
 }
 
 void Path_Res(char *cmdarray){
@@ -197,10 +230,10 @@ void Path_Res(char *cmdarray){
         //printf("this ran");
         //printf("%s\n", cwd);
         strrev(parendir);
-      //  printf("%s", parendir);
+       printf("%s", parendir);
         strcat(parendir, newpath); //newpath now contains the file pathway you need for whatever your function
         //you're using it for
-        //printf("%s", newpath);
+        printf("%s", newpath);
 
       }
     if(cmdarray[i] == '~'){
@@ -244,14 +277,14 @@ void pipeexe(char *cmdarray, int size){
 			spacecount = 0;
 		}
 	}
-	spaces[size] = spacecount; 
-	
+	spaces[size] = spacecount;
+
 	for(int i = 0; i < size + 1; i++){
 		cmds[i] = (char *)malloc(sizeof(char) * (index[i + 1] - index[i] + 1));
 		strncpy(cmds[i], &cmdarray[index[i] + 1], (index[i + 1] - index[i] - 1));
 		cmds[i][index[i + 1] - index[i] - 1] = '\0'; // null terminating
 	}
-	index[0] = 0; 
+	index[0] = 0;
 	/* end of parsing pipelines */
 
 	/* Error checking */
@@ -263,7 +296,7 @@ void pipeexe(char *cmdarray, int size){
 	}
 
 	/* Implementation */
-/* Skeleton of the implementation straight from the book. Commented out for now 
+/* Skeleton of the implementation straight from the book. Commented out for now
 	int fd[2];
 	int pid, pid2;
 
