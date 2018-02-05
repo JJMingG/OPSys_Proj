@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/utsname.h>
-
+#include <sys/time.h>
 
 void ParseIt(char* input);
 void envvar(char *cmdarray);
@@ -12,6 +12,14 @@ void pipeexe(char *cmdarray, int size);
 void redirection(char *cmdarray);
 void execution(char *cmdarray);
 char *strrev(char *str);
+
+// Built-ins
+int B_exit(char *args);
+void cd(char **args);
+void echo(char *args);
+void etime(char *args);
+void io(char *args);
+
 int main()
 {
   char *name;
@@ -271,21 +279,25 @@ void pipeexe(char *cmdarray, int size){
 				// Execute Command (use command function)
 				printf("Child Execution: cmds[i] using cmds[i - 1] (%s): %s\n", cmds[i - 1], cmds[i]);
 			}
-			else{ // fork > 0 is in parent process, fork < 0 is error
+			else if(fork() < 0){ // for < 0 is error
+				perror("fork");
+				exit(1);
+			}
+			else{ // fork > 0 is in parent process
 				// cmd2 (Reader)
 				close(STDIN_FILENO);
 				dup(fd[0]);
 				//close(fd[0]);
 				close(fd[1]);
 				// Execute Command (use command function)
-				printf("Parent Execution: cmds[i - 1]: %s\n", cmds[i - 1]);
+				printf("Parent Execution: cmds[i - 1]: %s\n", cmds[i]);
 			}
 		}
 		else{
 			// Parent (Shell)
 			//close(fd[0]);
 			//close(fd[1]);
-			close(fd);
+			//close(fd);
 			printf("IN PARENT SHELL and i is %d\n", i);
 			//waitpid();
 		}
@@ -308,16 +320,48 @@ void redirection(char *cmdarray){
 }
 
 void execution(char *cmdarray){
-// Background Processing and Built-ins will need to be implemented here i believe
+
 
 }
 
+/* Built-ins */
+int B_exit(char *args){
+	printf("Exiting Shell....");
+	return 0;
+}
 
+void cd(char **args){
+	// This function is assuming an array of char arrays is passed in
+	if(args[1] == NULL) // If no args, $HOME is the arg
+		args[1] = "$HOME";
+	else{ // Signals error if target is not a directory
+		if(chdir(args[1]) != 0)
+			perror("Not a directory");
+	}
+}
 
+void echo(char *args){
+	//outputs whatever user specifies
+	//for each argument:
+		//look up the argument in the list of environment variables
+		//print the value if it exists
+		//signal an error if it does not exist
+}
 
+void etime(char *args){
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
 
+	// take out "etime" and pass to execute function
 
+	gettimeofday(&end, NULL);
+	printf("Elapsed Time: %ld.%06ld\n", end.tv_sec - start.tv_sec, end.tv_usec - start.tv_usec);
+	// Not sure if subtracting the microseconds will return a negative at times?
+}
 
+void io(char *args){
+
+}
 
 
 
