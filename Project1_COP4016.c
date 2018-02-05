@@ -109,9 +109,41 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
   cmd_array_counter++;
 }
     }
-
+    printf("%s", cmdarray);
+    char ** cmdline;
+    char * temp;
+    int checker = 0;
+    int looker = 0;
+    int looker_two = 0;
+    int size = 0;
+    int test = 0;
+    cmdline = (char **)calloc(strlen(cmdarray), sizeof(char *));
+    temp = (char *)calloc(strlen(cmdarray), sizeof(char));
+while(test == 0){
+for(int i = looker; i < strlen(cmdarray); i++){
+  if(i == strlen(cmdarray) || i  == (strlen(cmdarray) - 1)){
+    printf("This ran");
+    test = 1;
+  }
+  if(cmdarray[i] == '*'){
+    checker = 0;
+    ++looker;
+    break;
+  }
+  else
+  {
+    temp[checker] = cmdarray[i];
+    checker++;
+  }
+  looker++;
+  }
+  //printf("%s\n", temp);
+cmdline[size] = temp;
+//printf("%s\n", cmdline[size]);
+size++;
+}
    //performs any of the environment variable needs if there are any
-  printf("%s", cmdarray); // print statement for confirmation of correct parsing
+//  printf("%s", cmdarray); // print statement for confirmation of correct parsing
   envvar(cmdarray);
   Path_Res(cmdarray);
 
@@ -244,14 +276,14 @@ void pipeexe(char *cmdarray, int size){
 			spacecount = 0;
 		}
 	}
-	spaces[size] = spacecount; 
-	
+	spaces[size] = spacecount;
+
 	for(int i = 0; i < size + 1; i++){
 		cmds[i] = (char *)malloc(sizeof(char) * (index[i + 1] - index[i] + 1));
 		strncpy(cmds[i], &cmdarray[index[i] + 1], (index[i + 1] - index[i] - 1));
 		cmds[i][index[i + 1] - index[i] - 1] = '\0'; // null terminating
 	}
-	index[0] = 0; 
+	index[0] = 0;
 	/* end of parsing pipelines */
 
 	/* Error checking */
@@ -263,7 +295,7 @@ void pipeexe(char *cmdarray, int size){
 	}
 
 	/* Implementation */
-/* Skeleton of the implementation straight from the book. Commented out for now 
+/* Skeleton of the implementation straight from the book. Commented out for now
 	int fd[2];
 
 	for(int i = 1; i < size + 1; i++){
