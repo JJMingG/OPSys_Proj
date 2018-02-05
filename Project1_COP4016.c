@@ -263,7 +263,7 @@ void pipeexe(char *cmdarray, int size){
 	}
 
 	/* Implementation */
-/* Skeleton of the implementation straight from the book. Commented out for now */
+/* Skeleton of the implementation straight from the book. Commented out for now 
 	int fd[2];
 	int pid, pid2;
 
@@ -307,7 +307,7 @@ void pipeexe(char *cmdarray, int size){
 			//waitpid();
 		}
 	}
-/**/
+*/
 	/* TEST AREA */
 /*	for(int i = 0; i < size + 1; i++)
 		printf("%s\nlength: %d\n", cmds[i], strlen(cmds[i]));
