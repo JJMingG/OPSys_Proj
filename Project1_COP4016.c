@@ -7,12 +7,9 @@
 
 void ParseIt(char* input);
 char* envvar(char *cmdarray);
-void Path_Res(char **cmdline, int size);
-void pipeexe(char *cmdarray, int size);
-void redirection(char *cmdarray);
-//void Path_Res(char *cmdarray);
-//void pipeexe(char **cmdline, int size, int numpipes);
-//void redirection(char **cmdline, int size);
+void Path_Res(char **cmdarray, int size);
+void pipeexe(char **cmdline, int size, int numpipes);
+void redirection(char **cmdline, int size);
 void execution(char *cmdarray);
 char *strrev(char *str);
 
@@ -237,25 +234,25 @@ void Path_Res(char **cmdline, int size){
     }
   }
 }
-void pipeexe(char *cmdarray, int size){
-//void pipeexe(char **cmdline, int size, int numpipes){
+
+void pipeexe(char **cmdline, int size, int numpipes){
 	printf("In pipe function\n");
 	/* parse based on pipelines */
-/*	char *** cmds;
+	char *** cmds;
 	int index[numpipes];
 	int indexcounter = 0;
 	char * pipelinechar = "|";
 
 	for(int i = 0; i < size; i++)
 	{
-		printf("Checking args: %s", cmdline[i]);
+		printf("Checking args: %s\n", cmdline[i]);
 		if(strcmp(cmdline[i], pipelinechar) == 0){
 			index[indexcounter] = i;
 			indexcounter++;
-			printf("Pipeline at %d", i);
+			printf("Pipeline at %d\n", i);
 		}
 	}
-*/
+
 /*
 	char ** cmds;
 	cmds = (char **)malloc(sizeof(char *) * (size + 1));
