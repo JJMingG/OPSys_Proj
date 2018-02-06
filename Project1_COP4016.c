@@ -117,10 +117,15 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
     int looker_two = 0;
     int size = 0;
     int test = 0;
+    int make = 0;
     cmdline = (char **)calloc(strlen(cmdarray), sizeof(char *));
 while(test == 0){
   temp = (char *)calloc(strlen(cmdarray), sizeof(char));
 for(int i = looker; i < strlen(cmdarray); i++){
+  if(cmdarray[i] != '*'){
+make = 1;
+  }
+  if (make == 1){
   if(i == strlen(cmdarray) || i  == (strlen(cmdarray) - 1)){
   //  printf("This ran");
     test = 1;
@@ -129,13 +134,14 @@ for(int i = looker; i < strlen(cmdarray); i++){
     checker = 0;
     ++looker;
     break;
-  }
+    }
   else
-  {
+    {
     temp[checker] = cmdarray[i];
     checker++;
-  }
+    }
   looker++;
+  }
 }
   //printf("%s\n", temp);
 cmdline[size] = temp;
@@ -254,15 +260,15 @@ void pipeexe(char **cmdline, int size, int numpipes){
 //			printf("Pipeline at %d\n", i);
 		}
 	}
-	
-	/* Passing executions before and after pipes would be 
+
+	/* Passing executions before and after pipes would be
 	 * for(int i = 0, i < numpipes + 1; i++)
 	 * execution(cmdline + (1 + index[i]), index[i + 1] - index[i]);
 	 *
 	 * The cmdline + (1 + index[i]) shud pass the cmdline 2d array starting from the beginning of command of each pipe
 	 * The +1 is to skip over the "|"
 	 * The index[i + 1] - index[i] is to indicate the size which in reality is bigger but this will show only the parts
-	 * that are before the next pipe 
+	 * that are before the next pipe
 	 */
 	/* end of parsing pipelines */
 
@@ -272,7 +278,7 @@ void pipeexe(char **cmdline, int size, int numpipes){
 	/* Error checking */
 	// Not sure if i shud do error checking here or in the actual implementation but I'll leave it here for now
 	for(int i = 0; i < numpipes + 1; i++){
-		if(index[i + 1] - index[i] <= 1){ 
+		if(index[i + 1] - index[i] <= 1){
 			perror("Error: syntax error with pipes. Exiting...\n");
 			exit(1);
 		}
@@ -328,7 +334,7 @@ void pipeexe(char **cmdline, int size, int numpipes){
 /*	for(int i = 0; i < size + 1; i++)
 		printf("%s\nlength: %d\n", cmds[i], strlen(cmds[i]));
 */
-	/* Clean-up 
+	/* Clean-up
 	for(int i = 0; i < size + 1; i++)
 		free(cmds[i]); // not sure if free(cmds) would free these too
 	free(index);
