@@ -238,59 +238,46 @@ void Path_Res(char **cmdline, int size){
 void pipeexe(char **cmdline, int size, int numpipes){
 	printf("In pipe function\n");
 	/* parse based on pipelines */
-	char *** cmds;
-	int index[numpipes];
-	int indexcounter = 0;
+	int index[numpipes + 2]; // +2 to compensate the begining and end which shouldn't have pipes.
+	int indexcounter = 1;
 	char * pipelinechar = "|";
 
-	for(int i = 0; i < size; i++)
-	{
-		printf("Checking args: %s\n", cmdline[i]);
+	index[0] = -1;
+	index[numpipes + 1] = size;
+
+	// Iterate through cmdline to find index of pipes
+	for(int i = 0; i < size; i++){
+//		printf("Checking args: %s\n", cmdline[i]);
 		if(strcmp(cmdline[i], pipelinechar) == 0){
 			index[indexcounter] = i;
 			indexcounter++;
-			printf("Pipeline at %d\n", i);
+//			printf("Pipeline at %d\n", i);
 		}
 	}
-
-/*
-	char ** cmds;
-	cmds = (char **)malloc(sizeof(char *) * (size + 1));
-	int * index = (int*)malloc(sizeof(int) * (size + 2));
-	int * spaces = (int*)malloc(sizeof(int) * (size + 1));
-	index[0] = -1;
-	index[size + 1] = strlen(cmdarray) - 1;
-	int indexcount = 1, spacecount = 0;
-
-	for(int i = 0; i < strlen(cmdarray); i++){ // finds index of pipelines to parse
-		if(cmdarray[i] == '*') // counts number of spaces between each pipe
-			spacecount++;
-		if(cmdarray[i] == '|'){
-			index[indexcount] = i;
-			indexcount++;
-			spaces[indexcount - 2] = spacecount;
-			spacecount = 0;
-		}
-	}
-	spaces[size] = spacecount;
-
-	for(int i = 0; i < size + 1; i++){
-		cmds[i] = (char *)malloc(sizeof(char) * (index[i + 1] - index[i] + 1));
-		strncpy(cmds[i], &cmdarray[index[i] + 1], (index[i + 1] - index[i] - 1));
-		cmds[i][index[i + 1] - index[i] - 1] = '\0'; // null terminating
-	}
-	index[0] = 0;
-*/
+	
+	/* Passing executions before and after pipes would be 
+	 * for(int i = 0, i < numpipes + 1; i++)
+	 * execution(cmdline + (1 + index[i]), index[i + 1] - index[i]);
+	 *
+	 * The cmdline + (1 + index[i]) shud pass the cmdline 2d array starting from the beginning of command of each pipe
+	 * The +1 is to skip over the "|"
+	 * The index[i + 1] - index[i] is to indicate the size which in reality is bigger but this will show only the parts
+	 * that are before the next pipe 
+	 */
 	/* end of parsing pipelines */
 
-	/* Error checking 
-	for(int i = 0; i < size + 1; i++){
-		if(index[i + 1] - index[i] - spaces[i] <= 1){ // Doesn't work for 1 letter commands but there shudnt be such a thing anyways
-			printf("Error: syntax error with pipes. Exiting...\n");
+//	for(int i = 0; i < numpipes + 2; i++)
+//		printf("Index = %d\n", index[i]);
+
+	/* Error checking */
+	// Not sure if i shud do error checking here or in the actual implementation but I'll leave it here for now
+	for(int i = 0; i < numpipes + 1; i++){
+		if(index[i + 1] - index[i] <= 1){ 
+			perror("Error: syntax error with pipes. Exiting...\n");
 			exit(1);
 		}
 	}
-*/
+
 	/* Implementation */
 /* Skeleton of the implementation straight from the book. Commented out for now
 	int fd[2];
