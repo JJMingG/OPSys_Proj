@@ -10,7 +10,7 @@ char* envvar(char *cmdarray);
 void Path_Res(char **cmdarray, int size);
 void pipeexe(char **cmdline, int size, int numpipes);
 void redirection(char **cmdline, int size);
-void execution(char *cmdarray);
+void execution(char **cmdline, int size);
 char *strrev(char *str);
 
 // Built-ins
@@ -310,7 +310,7 @@ void redirection(char **cmdline, int size){
 
 }
 
-void execution(char *cmdarray){
+void execution(char **cmdline, int size){
 
 
 }
