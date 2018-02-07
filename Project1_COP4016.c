@@ -109,18 +109,18 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
   cmd_array_counter++;
 }
     }
-    printf("%s", cmdarray);
+    //printf("%s", cmdarray);
     char ** cmdline;
-    char * temp;
+ char * temp;
     int checker = 0;
     int looker = 0;
     int looker_two = 0;
     int size = 0;
     int test = 0;
     int make = 0;
-    cmdline = (char **)calloc(strlen(cmdarray), sizeof(char *));
+    cmdline = (char **)calloc(strlen(cmdarray), sizeof(char **));
 while(test == 0){
-  temp = (char *)calloc(strlen(cmdarray), sizeof(char));
+temp = (char *)calloc(strlen(cmdarray), sizeof(char *));
 for(int i = looker; i < strlen(cmdarray); i++){
   if(cmdarray[i] != '*'){
 make = 1;
@@ -143,16 +143,15 @@ make = 1;
   looker++;
   }
 }
-  //printf("%s\n", temp);
-cmdline[size] = temp;
-printf("%s\n", cmdline[size]);
+//  printf("%s\n", temp);
+//cmdline[size] = temp;
+strcpy(cmdline[size], &temp);
+//printf("%s\n", cmdline[size]);
+free(temp);
+printf("%s", cmdline[0]);
 size++;
-
-
 }
-
-   //performs any of the environment variable needs if there are any
-//  printf("%s", cmdarray); // print statement for confirmation of correct parsing
+printf("%s", cmdline[1]);
   Path_Res(cmdline, size);
 
   /* Execution process commands */
@@ -199,46 +198,10 @@ value[i] = env_var[i]; //have to get rid of null character because its a c strin
 }
 
 void Path_Res(char **cmdline, int size){
-  //printf("%s", cmdarray);
-  for (int i = 0; i < (size); i++){
-    for(int a = 0; a < strlen(&cmdline[i][a]); a++){
-    if(cmdline[i][a] == '.'){
-    //DO nothing since we're already in this current directory
-    }
-    if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.'){
-      char cwd[200];
-      if (getcwd(cwd, sizeof(cwd)) == NULL){
-         perror("getcwd() error");
-        }
-       else{
-        //printf( "%s", cwd);
-       //fprintf(stdout, "%s", direc);
-     }
-     for(int b = 0; b < strlen(cmdline[i]); b++){
+  printf("Path res started");
+  printf("%s", cmdline[0]);
 
 
-
-     }
-  }
-    if(cmdline[i][a] == '~'){
-
-//replace beginning with $HOME environmental variable
-
-    }
-    if(cmdline[i][a] == '/'){
-
-
-    }
-    if(cmdline[i][a] == '&' || cmdline[i][a] == '<' || cmdline[i][a] == '*' || cmdline[i][a] == '>'){
-        i++;
-    }
-    else{
-//Make this look and see if it a is a lone file, if not check it its one of the four commands io, echo, exit or etime
-// If none of those signal a file not found error
-
-      }
-    }
-  }
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
@@ -498,20 +461,14 @@ if(cmdarray[i] == '*' || cmdarray[i] == ' ' || &cmdarray[i] == NULL){
      //printf( "%s", cwd);
     //fprintf(stdout, "%s", direc);
   }
-  for(int i = strlen(cwd) - 1; i > 0; i--){
-      parendir[trackerforparen] = cwd[i]; //get currentdir and parent directory
-      trackerforparen++;
-      if(cwd[i] == '/'){
-        ++backslashtrack;
-      }
-      if (backslashtrack == 2){
-        break;
-      }
-  }
-  //printf("this ran");
-  //printf("%s\n", cwd);
-  strrev(parendir);
- printf("%s", parendir);
-  strcat(parendir, newpath); //newpath now contains the file pathway you need for whatever your function
+ //newpath now contains the file pathway you need for whatever your function
   //you're using it for
-  printf("%s", newpath);*/
+  printf("%s", newpath);
+
+
+
+  }
+
+
+
+  */
