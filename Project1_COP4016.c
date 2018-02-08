@@ -318,6 +318,7 @@ void pipeexe(char **cmdline, int size, int numpipes){
 			}
 			else{ // fork > 0 is in parent process
 				// cmd2 (Reader)
+        //waitpid(pid2, NULL, 0); //trying with waitpid here
 				close(STDIN_FILENO);
 				dup(fd[0]);
 				close(fd[0]);
@@ -325,7 +326,7 @@ void pipeexe(char **cmdline, int size, int numpipes){
 				// Execute Command (use command function)
         //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
 				echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-        waitpid(pid2, NULL, 0); //trying with pid here
+        waitpid(pid2, NULL, 0); //trying with waitpid here
 			}
 		}
 		else if(pid < 0){
@@ -354,7 +355,7 @@ void execution(char **cmdline, int size){
 
 /* Built-ins */
 int B_exit(char **args, int size){
-	printf("Exiting Shell....");
+	printf("Exiting Shell....\n");
 	exit(0);
 }
 
@@ -367,7 +368,11 @@ void cd(char **args, int size){
   // Path resolution is predetermined already
 	if(chdir(args[1]) != 0){
 	   perror("Error");
+     B_exit(args, size);
 	}
+  if(setenv("$PWD", args[0], 1) != 0){
+     perror("Unable to set PWD")
+  }
 }
 
 void echo(char **args, int size){
@@ -388,6 +393,7 @@ void echo(char **args, int size){
 }
 
 void etime(char **args, int size){
+  long sec, msec;
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 
@@ -396,7 +402,13 @@ void etime(char **args, int size){
   // passes in by starting from the next command and decrease size to compensate
 
 	gettimeofday(&end, NULL);
-	printf("Elapsed Time: %ld.%06ld\n", end.tv_sec - start.tv_sec, end.tv_usec - start.tv_usec);
+  sec = end.tv_sec - start.tv_sec;
+  msec = end.tv_usec - start.tv_sec;
+  if(msec < 0){
+      sec -= 1;
+      msec += 1;
+  }
+	printf("Elapsed Time: %ld.%06ld\n", sec, msec); //end.tv_sec - start.tv_sec, end.tv_usec - start.tv_usec);
 	// Not sure if subtracting the microseconds will return a negative at times?
 }
 
