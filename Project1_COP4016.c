@@ -10,7 +10,7 @@ void ParseIt(char* input);
 char* envvar(char *cmdarray);
 void Path_Res(char **cmdarray, int size);
 void pipeexe(char **cmdline, int size, int numpipes);
-void redirection(char **cmdline, int size);
+void redirection(char **cmdline, int size, int numredir);
 void execution(char **cmdline, int size);
 char *strrev(char *str);
 
@@ -173,7 +173,7 @@ size++;
 	   hasPipe = 0;
   }
   else if(hasRedir > 0){
-	   redirection(cmdline, size);
+	   redirection(cmdline, size, hasRedir);
 	   hasRedir = 0;
   }
   else
@@ -293,58 +293,126 @@ void pipeexe(char **cmdline, int size, int numpipes){
 	/* end of parsing pipelines */
 
 	/* Implementation */
-
-	int fd[2];
-	int pid, pid2;
+  int fd1[2];
+  int fd2[2];
+	int pid[numpipes + 1];
 
 	for(int i = 0; i < numpipes + 1; i++){
-    pipe(fd); // minor test case with pipe here
-		if(pid = fork() == 0){
-			// Child (cmd1 | cmd2)
-			//pipe(fd);
-			if(pid2 = fork() == 0){ // fork == 0 is in child process
-				// cmd1 (Writer)
-				close(STDOUT_FILENO);
-				dup(fd[1]);
-				close(fd[0]);
-				close(fd[1]);
-				// Execute Command (use command function)
-        //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-				echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-			}
-			else if(pid2 < 0){ // for < 0 is error
-				perror("fork2");
-				exit(1);
-			}
-			else{ // fork > 0 is in parent process
-				// cmd2 (Reader)
-        //waitpid(pid2, NULL, 0); //trying with waitpid here
-				close(STDIN_FILENO);
-				dup(fd[0]);
-				close(fd[0]);
-				close(fd[1]);
-				// Execute Command (use command function)
-        //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-				echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-        waitpid(pid2, NULL, 0); //trying with waitpid here
-			}
-		}
-		else if(pid < 0){
-			perror("fork1");
-			exit(1);
-		}
-		else{
-			// Parent (Shell)
-			close(fd[0]);
-			close(fd[1]);
-			//close(fd);
-			printf("IN PARENT SHELL and i is %d\n", i);
-			waitpid(pid, NULL, 0);
-		}
+    //int fd[2];
+    //pipe(fd);
+    if(i == 0){ // First Command
+          pipe(fd1);
+      		if(pid[i] = fork() == 0){ // Child (cmd1 | cmd2)
+              close(STDOUT_FILENO);
+              dup(fd1[1]);
+              close(fd1[0]);
+              close(fd1[1]);
+
+              // Execution
+              //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+              echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+              exit(0);
+           }
+           else if(pid[i] < 0){
+              perror("Pipe error");
+              exit(0);
+      		 }
+     }
+     else if(i == numpipes){ // Last Command
+           pipe(fd2);
+           if(pid[i] = fork() == 0){ // Child (cmd1 | cmd2)
+               close(STDIN_FILENO);
+               dup(fd2[0]);
+               close(fd2[0]);
+               close(fd2[1]);
+
+               // Execution
+               //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+               echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+               exit(0);
+            }
+            else if(pid[i] < 0){
+               perror("Pipe error");
+               exit(0);
+            }
+      }
+      else{
+            pipe(fd1);
+            pipe(fd2);
+            if(pid[i] = fork() == 0){ // Child (cmd1 | cmd2)
+                // Get output as input
+                close(STDOUT_FILENO);
+                dup(fd1[1]);
+                close(fd1[0]); // might need to close after the next dup
+                close(fd1[1]);
+                // Get info as output for next cmd
+                close(STDIN_FILENO);
+                dup(fd2[0]);
+                close(fd2[0]);
+                close(fd2[1]);
+
+                // Execution
+                //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+                echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+                exit(0);
+             }
+             else if(pid[i] < 0){
+                perror("Pipe error");
+                exit(0);
+             }
+      }
 	}
+  for(int i = 0; i < numpipes + 1; i++){ // Parent
+       waitpid(pid[i], NULL, 0);
+  }
+  /* end of pipe implementation */
 }
 
-void redirection(char **cmdline, int size){
+void redirection(char **cmdline, int size, int numredir){
+    /* Indexing of redirections */
+    int index[numredir + 2]; // turn this into an array if we going to do more than one redirection
+    index[0] = -1;
+    index[numredir + 1] = size;
+    int indexcounter = 1;
+    for(int i = 0; i < size; i++){
+       if(strcmp(cmdline[i], "<") == 0 || strcmp(cmdline[i], ">") == 0){
+          index[indexcounter] = i;
+          indexcounter++;
+          if(indexcounter == numredir)
+             break;
+       }
+    }
+
+    /* Error Handline */
+    for(int i = 1; i < numredir + 1; i++){
+       if(index[i] == 0){
+          perror("Syntax Error: Cannot start with > or <");
+          exit(0);
+       }
+       else if(index[i] == size - 1){
+          perror("Syntax Error: No file to redirect to");
+          exit(0);
+       }
+       else if(index[i] - index[i - 1] < 2){ // Compensates for middle
+          perror("Syntax error: cannot have multiple concatenated redirection symbol");
+          exit(0);
+       }
+    }
+
+    /* Implementation */
+    indexcounter = 0;
+    for(int i = 1; i < numredir + 1; i++){
+       if(strcmp(cmdline[index[i]], "<") == 0){ // Input Redirection
+
+       }
+       else if(strcmp(cmdline[index[i]], ">") == 0){ // Output Redirection
+
+       }
+       else{
+          perror("Redirection implementation error");
+          exit(0);
+       }
+    }
 
 }
 
@@ -370,9 +438,9 @@ void cd(char **args, int size){
 	   perror("Error");
      B_exit(args, size);
 	}
-  if(setenv("$PWD", args[0], 1) != 0){
-     perror("Unable to set PWD")
-  }
+  //if(setenv("$PWD", args[0], 1) != 0){
+     //perror("Unable to set PWD");
+  //}
 }
 
 void echo(char **args, int size){
