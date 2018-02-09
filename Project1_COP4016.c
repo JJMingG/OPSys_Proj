@@ -1,3 +1,18 @@
+/* Progress remaining:
+ * - Need parsing to parse out spaces correct and not have empty values in 2d array
+ *        - some parsed lines have weird stuff at the end
+          - check my parsing in redirection as a reference? might help @evan
+ * - Path resolution function
+ * - Execution function
+ *        - Add built in function calls even tho parsit does already (mostly for pipeline an redirection)
+ * - Background Processes
+ * - cd function setenv
+ * - io function
+ * - Test each function (particulary pipe and redirection with execution and correct parsing)
+ * - Create Makefile
+ * - Write up README file
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -5,12 +20,13 @@
 #include <sys/utsname.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 void ParseIt(char* input);
 char* envvar(char *cmdarray);
 void Path_Res(char **cmdarray, int size);
 void pipeexe(char **cmdline, int size, int numpipes);
-void redirection(char **cmdline, int size, int numredir);
+void redirection(char **cmdline, int size);
 void execution(char **cmdline, int size);
 char *strrev(char *str);
 
@@ -158,7 +174,15 @@ size++;
   Path_Res(cmdline, size);
 
   /* Execution process commands */
-  if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
+  if(hasPipe > 0){
+	   pipeexe(cmdline, size, hasPipe);
+	   hasPipe = 0;
+  }
+  else if(hasRedir > 0){
+	   redirection(cmdline, size);
+	   hasRedir = 0;
+  }
+  else if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
      B_exit(cmdline, size);
   else if(strcmp(cmdline[0], "echo") == 0)
      echo(cmdline, size);
@@ -168,20 +192,9 @@ size++;
      io(cmdline, size);
   else if(strcmp(cmdline[0], "cd") == 0)
      cd(cmdline, size);
-  else if(hasPipe > 0){
-	   pipeexe(cmdline, size, hasPipe);
-	   hasPipe = 0;
-  }
-  else if(hasRedir > 0){
-	   redirection(cmdline, size, hasRedir);
-	   hasRedir = 0;
-  }
   else
 	   execution(cmdline, size);
-  /* Because pipelining and redirection both needs execution, it is better off sending them to their own function
-   * to do their respective parts and then call execution. Built-in functions and background processing will also
-   * need execution.
-   */
+  /* Will need built-ins in execution function too */
 }
 
 char* envvar(char *cmdarray){
@@ -254,7 +267,6 @@ void Path_Res(char **cmdline, int size){
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
-	printf("In pipe function\n");
 	/* parse based on pipelines */
 	int index[numpipes + 2]; // +2 to compensate the begining and end which shouldn't have pipes.
 	int indexcounter = 1;
@@ -264,11 +276,9 @@ void pipeexe(char **cmdline, int size, int numpipes){
 
 	// Iterate through cmdline to find index of pipes
 	for(int i = 0; i < size; i++){
-//		printf("Checking args: %s\n", cmdline[i]);
 		if(strcmp(cmdline[i], "|") == 0){
 			index[indexcounter] = i;
 			indexcounter++;
-//			printf("Pipeline at %d\n", i);
 		}
 	}
 
@@ -298,8 +308,6 @@ void pipeexe(char **cmdline, int size, int numpipes){
 	int pid[numpipes + 1];
 
 	for(int i = 0; i < numpipes + 1; i++){
-    //int fd[2];
-    //pipe(fd);
     if(i == 0){ // First Command
           pipe(fd1);
       		if(pid[i] = fork() == 0){ // Child (cmd1 | cmd2)
@@ -368,52 +376,83 @@ void pipeexe(char **cmdline, int size, int numpipes){
   /* end of pipe implementation */
 }
 
-void redirection(char **cmdline, int size, int numredir){
+void redirection(char **cmdline, int size){
+    printf("IN REDIRECTION FUNCTION\n");
     /* Indexing of redirections */
-    int index[numredir + 2]; // turn this into an array if we going to do more than one redirection
-    index[0] = -1;
-    index[numredir + 1] = size;
-    int indexcounter = 1;
+    int index = 0; // Only need index for 1 redirection as stated by WenQi
     for(int i = 0; i < size; i++){
        if(strcmp(cmdline[i], "<") == 0 || strcmp(cmdline[i], ">") == 0){
-          index[indexcounter] = i;
-          indexcounter++;
-          if(indexcounter == numredir)
-             break;
+          if(index != 0){
+              // Keep even after finding index, in case there's another redirection symbol
+              perror("Error: Cannot have more than one redirection symbol");
+              exit(0);
+          }
+          index = i;
        }
     }
-
-    /* Error Handline */
-    for(int i = 1; i < numredir + 1; i++){
-       if(index[i] == 0){
-          perror("Syntax Error: Cannot start with > or <");
-          exit(0);
-       }
-       else if(index[i] == size - 1){
-          perror("Syntax Error: No file to redirect to");
-          exit(0);
-       }
-       else if(index[i] - index[i - 1] < 2){ // Compensates for middle
-          perror("Syntax error: cannot have multiple concatenated redirection symbol");
-          exit(0);
-       }
+    printf("AFTER INDEXING\n");
+    /* Error Handling */
+    if(index == 0){
+        perror("Error: No command specified");
+        exit(0);
     }
-
+    else if(index == size - 1){
+        perror("Error: No file specified");
+        exit(0);
+    }
+    printf("AFTER ERROR CHECKING\n");
+    /* Parse out redirection symbol and filename */
+    char ** temp = (char **)calloc(size - 2, sizeof(char *));
+    for(int i = 0; i < index; i++){ // get the cmds and args before the redirection symbol
+        temp[i] = (char *)calloc(strlen(cmdline[i]) + 1, sizeof(char));
+        temp[i] = cmdline[i];
+    }
+    for(int i = index + 2; i < size; i++){ // get the args after filename b/c they are considered args too
+        temp[i] = (char *)calloc(strlen(cmdline[i]) + 1, sizeof(char));
+        temp[i] = cmdline[i];
+    }
+    printf("AFTER PARSING\n");
     /* Implementation */
-    indexcounter = 0;
-    for(int i = 1; i < numredir + 1; i++){
-       if(strcmp(cmdline[index[i]], "<") == 0){ // Input Redirection
+    int fd, pid;
 
-       }
-       else if(strcmp(cmdline[index[i]], ">") == 0){ // Output Redirection
+    if(pid = fork() == 0){ // child process
+        if(strcmp(cmdline[index], ">") == 0){ // Output Redirection
+            // Create file if it doesn't exist, overwrite if it does
+            fd = open(cmdline[index + 1], O_CREAT | O_TRUNC | O_WRONLY);
+            close(STDOUT_FILENO);
+            dup(fd);
+            close(fd);
+        }
+        else if(strcmp(cmdline[index], "<") == 0){ // Input Redirection
+            fd = open(cmdline[index + 1], O_RDONLY);
+            close(STDIN_FILENO);
+            dup(fd);
+            close(fd);
+        }
+        else{
+            // Shouldn't be reached but here for safety measures
+            perror("Redirection implementation error");
+            exit(0);
+        }
 
-       }
-       else{
-          perror("Redirection implementation error");
-          exit(0);
-       }
+        // Execution
+        //execution(2dtemp, size - 2);
+        echo(temp, size - 2);
     }
-
+    else if(pid < 0){
+        perror("Fork error in redirection function");
+        exit(0);
+    }
+    else{ // parent process
+        close(fd);
+    }
+    printf("AFTER IMPLEMENTATION\n");
+    /* Memory Clean-up */
+    for(int i = 0; i < size - 2; i++){
+        printf("I is %d", i);
+        free(temp[i]);
+    }
+    free(temp);
 }
 
 void execution(char **cmdline, int size){
@@ -428,9 +467,13 @@ int B_exit(char **args, int size){
 }
 
 void cd(char **args, int size){
-	if(args[1] == NULL){ // If no args, $HOME is the arg
+  printf("size is %d\n", size);
+  args[1] = envvar(args[1]);
+  for(int i = 0; i < size; i++)
+    printf("content: %s\n", args[i]);
+	if(size < 2){ // If no args, $HOME is the arg
 		//char * home = "$HOME"; // String for $HOME
-	   strcpy(args[1], envvar("$HOME")); // Pass through env_var and copy to args[1]
+	   args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
 	}
 	 // Signals error if target is not a directory
   // Path resolution is predetermined already
@@ -438,7 +481,7 @@ void cd(char **args, int size){
 	   perror("Error");
      B_exit(args, size);
 	}
-  //if(setenv("$PWD", args[0], 1) != 0){
+  //if(setenv(envvar("$PWD"), args[1], 1) != 0){
      //perror("Unable to set PWD");
   //}
 }
@@ -477,7 +520,6 @@ void etime(char **args, int size){
       msec += 1;
   }
 	printf("Elapsed Time: %ld.%06ld\n", sec, msec); //end.tv_sec - start.tv_sec, end.tv_usec - start.tv_usec);
-	// Not sure if subtracting the microseconds will return a negative at times?
 }
 
 void io(char **args, int size){
