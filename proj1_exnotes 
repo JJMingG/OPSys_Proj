@@ -1,0 +1,72 @@
+
+  printf("%s", cmdline);
+  for (int i = 0; i < (size); i++){
+    for(int a = 0; a < strlen(&cmdline[i][a]); a++){
+      printf("%c" ,cmdline[i][a]);
+    if(cmdline[i][a] == '.'){
+    //DO nothing since we're already in this current directory
+    }
+    if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.'){
+      char cwd[200];
+      char *temp;
+      temp = (char *)calloc(strlen(cmdline[i]), sizeof(char));
+      if (getcwd(cwd, sizeof(cwd)) == NULL){
+         perror("getcwd() error");
+        }
+       else{
+        //printf( "%s", cwd);
+       //fprintf(stdout, "%s", direc);
+     }
+     char *previous_direc  =  getenv("$PWD");
+     printf("%s", getenv("$PWD"));
+  /*   for(int i = strlen(cwd) - 1; i > 0; i--){
+         parendir[trackerforparen] = cwd[i]; //get currentdir and parent directory
+         trackerforparen++;
+         if(cwd[i] == '/'){
+           ++backslashtrack;
+         }
+         if (backslashtrack == 2){
+           break;
+         }
+     }
+     //printf("this ran");
+     //printf("%s\n", cwd);
+     strrev(parendir);
+    printf("%s", parendir);*/
+
+
+
+
+
+    /* int temp_manip = 0;
+     for(int b = 0; b < strlen(cmdline[i] - 1); b++){
+       if(cmdline[i][b] == '.'){
+          printf("dot found");
+        }
+        else{
+          //temp[temp_manip] = cmdline[i][b];
+          printf("%c", cmdline[i][b]);
+
+        }
+        temp_manip++;
+     }
+     printf("%s", temp);*/
+  }
+    if(cmdline[i][a] == '~'){
+
+//replace beginning with $HOME environmental variable
+
+    }
+    if(cmdline[i][a] == '/'){
+
+
+    }
+    if(cmdline[i][a] == '&' || cmdline[i][a] == '<' || cmdline[i][a] == '*' || cmdline[i][a] == '>'){
+        i++;
+    }
+    else{
+//Make this look and see if it a is a lone file, if not check it its one of the four commands io, echo, exit or etime
+// If none of those signal a file not found error
+
+      }
+    }

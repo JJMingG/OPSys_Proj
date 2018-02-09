@@ -2,6 +2,7 @@
  * - Need parsing to parse out spaces correct and not have empty values in 2d array
  *        - some parsed lines have weird stuff at the end
           - check my parsing in redirection as a reference? might help @evan
+          Parsing FIXED 
  * - Path resolution function
  * - Execution function
  *        - Add built in function calls even tho parsit does already (mostly for pipeline an redirection)
@@ -130,18 +131,19 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
     printf("%s", cmdarray);
     char ** cmdline;
     char * temp;
+    char * newtemp;
     int checker = 0;
     int looker = 0;
     int looker_two = 0;
     int size = 0;
     int test = 0;
     int make = 0;
-    cmdline = (char **)calloc(strlen(cmdarray), sizeof(char *));
+    cmdline = (char **)calloc(strlen(cmdarray), sizeof(char **));
 while(test == 0){
-  temp = (char *)calloc(strlen(cmdarray), sizeof(char));
+temp = (char *)calloc(strlen(cmdarray), sizeof(char *));
 for(int i = looker; i < strlen(cmdarray); i++){
   if(cmdarray[i] != '*'){
-make = 1;
+        make = 1;
   }
   if (make == 1){
   if(i == strlen(cmdarray) || i  == (strlen(cmdarray) - 1)){
@@ -150,30 +152,51 @@ make = 1;
   }
   if(cmdarray[i] == '*'){
     checker = 0;
+  //  if(looker < strlen(cmdarray)){
     ++looker;
+//}
     break;
     }
   else
     {
+      if(cmdarray[i] != ' ' || cmdarray[i] != '\n'){
     temp[checker] = cmdarray[i];
     checker++;
+  }
     }
   looker++;
   }
 }
-  //printf("%s\n", temp);
+  int checker = 0;
+  for(int i = 0; i < strlen(temp);i++){
+    if(temp[i] == '\n'){
+
+    }
+    if(temp[i] == ' '){
+
+    }
+    if(temp[i] == '\0'){
+
+    }
+    else{
+      temp[checker] = temp[i];
+      checker++;
+    }
+  }
+  //temp = (char *)calloc(checker, sizeof(char *));
 cmdline[size] = temp;
-printf("%s\n", cmdline[size]);
+printf("%s\n", temp);
 size++;
-
-
 }
+//printf("%s", cmdline[1]);
 
-   //performs any of the environment variable needs if there are any
-//  printf("%s", cmdarray); // print statement for confirmation of correct parsing
-  Path_Res(cmdline, size);
+Path_Res(cmdline, size);
+envvar(cmdarray);
 
   /* Execution process commands */
+//<<<<<<< HEAD
+    if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
+//=======
   if(hasPipe > 0){
 	   pipeexe(cmdline, size, hasPipe);
 	   hasPipe = 0;
@@ -183,9 +206,10 @@ size++;
 	   hasRedir = 0;
   }
   else if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
+//>>>>>>> 0c88232d17476f7a1d9eea1b1dda34db8f804bf9
      B_exit(cmdline, size);
   else if(strcmp(cmdline[0], "echo") == 0)
-     echo(cmdline, size);
+   echo(cmdline, size);
   else if(strcmp(cmdline[0], "etime") == 0)
      etime(cmdline, size);
   else if(strcmp(cmdline[0], "io") == 0)
@@ -211,59 +235,24 @@ for (int i = 0; i < strlen(cmdarray); i++){
       }
     }
   }
-   printf("%s", env_var);
+   //printf("%s", env_var);
 char value[150] = {' '};
 char *env_value;
 for(int i = 0;i < strlen(env_var) - 1; i++) {
 value[i] = env_var[i]; //have to get rid of null character because its a c string
  }
- printf("%s\n", value);
+// printf("%s\n", value);
  env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
-  //printf(env_value);
+//  printf("%s\n",env_value);
   return env_value;
 }
 
 void Path_Res(char **cmdline, int size){
-  //printf("%s", cmdarray);
-  for (int i = 0; i < (size); i++){
-    for(int a = 0; a < strlen(&cmdline[i][a]); a++){
-    if(cmdline[i][a] == '.'){
-    //DO nothing since we're already in this current directory
-    }
-    if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.'){
-      char cwd[200];
-      if (getcwd(cwd, sizeof(cwd)) == NULL){
-         perror("getcwd() error");
-        }
-       else{
-        //printf( "%s", cwd);
-       //fprintf(stdout, "%s", direc);
-     }
-     for(int b = 0; b < strlen(cmdline[i]); b++){
-
-
-
-     }
+  printf("Path res started");
+  for(int i = 0; i < size;i++){
+printf("%s\n", cmdline[i]);
   }
-    if(cmdline[i][a] == '~'){
 
-//replace beginning with $HOME environmental variable
-
-    }
-    if(cmdline[i][a] == '/'){
-
-
-    }
-    if(cmdline[i][a] == '&' || cmdline[i][a] == '<' || cmdline[i][a] == '*' || cmdline[i][a] == '>'){
-        i++;
-    }
-    else{
-//Make this look and see if it a is a lone file, if not check it its one of the four commands io, echo, exit or etime
-// If none of those signal a file not found error
-
-      }
-    }
-  }
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
@@ -630,20 +619,14 @@ if(cmdarray[i] == '*' || cmdarray[i] == ' ' || &cmdarray[i] == NULL){
      //printf( "%s", cwd);
     //fprintf(stdout, "%s", direc);
   }
-  for(int i = strlen(cwd) - 1; i > 0; i--){
-      parendir[trackerforparen] = cwd[i]; //get currentdir and parent directory
-      trackerforparen++;
-      if(cwd[i] == '/'){
-        ++backslashtrack;
-      }
-      if (backslashtrack == 2){
-        break;
-      }
-  }
-  //printf("this ran");
-  //printf("%s\n", cwd);
-  strrev(parendir);
- printf("%s", parendir);
-  strcat(parendir, newpath); //newpath now contains the file pathway you need for whatever your function
+ //newpath now contains the file pathway you need for whatever your function
   //you're using it for
-  printf("%s", newpath);*/
+  printf("%s", newpath);
+
+
+
+  }
+
+
+
+  */
