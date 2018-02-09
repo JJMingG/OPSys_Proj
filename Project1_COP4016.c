@@ -166,20 +166,36 @@ for(int i = looker; i < strlen(cmdarray); i++){
   looker++;
   }
 }
-cmdline[size] = temp;
+  int checker = 0;
+  for(int i = 0; i < strlen(temp);i++){
+    if(temp[i] == '\n'){
 
+    }
+    if(temp[i] == ' '){
+
+    }
+    if(temp[i] == '\0'){
+
+    }
+    else{
+      temp[checker] = temp[i];
+      checker++;
+    }
+  }
+  //temp = (char *)calloc(checker, sizeof(char *));
+cmdline[size] = temp;
 printf("%s\n", temp);
 size++;
 }
 //printf("%s", cmdline[1]);
-free(temp);
-  Path_Res(cmdline, size);
-  envvar(cmdarray);
+
+Path_Res(cmdline, size);
+envvar(cmdarray);
 
   /* Execution process commands */
-<<<<<<< HEAD
+//<<<<<<< HEAD
     if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
-=======
+//=======
   if(hasPipe > 0){
 	   pipeexe(cmdline, size, hasPipe);
 	   hasPipe = 0;
@@ -189,7 +205,7 @@ free(temp);
 	   hasRedir = 0;
   }
   else if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
->>>>>>> 0c88232d17476f7a1d9eea1b1dda34db8f804bf9
+//>>>>>>> 0c88232d17476f7a1d9eea1b1dda34db8f804bf9
      B_exit(cmdline, size);
   else if(strcmp(cmdline[0], "echo") == 0)
    echo(cmdline, size);
@@ -218,24 +234,23 @@ for (int i = 0; i < strlen(cmdarray); i++){
       }
     }
   }
-   printf("%s", env_var);
+   //printf("%s", env_var);
 char value[150] = {' '};
 char *env_value;
 for(int i = 0;i < strlen(env_var) - 1; i++) {
 value[i] = env_var[i]; //have to get rid of null character because its a c string
  }
- printf("%s\n", value);
+// printf("%s\n", value);
  env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
-  printf("%s\n",env_value);
+//  printf("%s\n",env_value);
   return env_value;
 }
 
 void Path_Res(char **cmdline, int size){
   printf("Path res started");
   for(int i = 0; i < size;i++){
-    printf("%s\n",cmdline[i]);
+printf("%s\n", cmdline[i]);
   }
-
 
 }
 
