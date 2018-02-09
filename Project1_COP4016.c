@@ -2,6 +2,7 @@
  * - Need parsing to parse out spaces correct and not have empty values in 2d array
  *        - some parsed lines have weird stuff at the end
           - check my parsing in redirection as a reference? might help @evan
+          Parsing FIXED 
  * - Path resolution function
  * - Execution function
  *        - Add built in function calls even tho parsit does already (mostly for pipeline an redirection)
