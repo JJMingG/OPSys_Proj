@@ -111,9 +111,10 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
   cmd_array_counter++;
 }
     }
-    //printf("%s", cmdarray);
+    printf("%s", cmdarray);
     char ** cmdline;
- char * temp;
+    char * temp;
+    char * newtemp;
     int checker = 0;
     int looker = 0;
     int looker_two = 0;
@@ -125,7 +126,7 @@ while(test == 0){
 temp = (char *)calloc(strlen(cmdarray), sizeof(char *));
 for(int i = looker; i < strlen(cmdarray); i++){
   if(cmdarray[i] != '*'){
-make = 1;
+        make = 1;
   }
   if (make == 1){
   if(i == strlen(cmdarray) || i  == (strlen(cmdarray) - 1)){
@@ -134,33 +135,36 @@ make = 1;
   }
   if(cmdarray[i] == '*'){
     checker = 0;
+  //  if(looker < strlen(cmdarray)){
     ++looker;
+//}
     break;
     }
   else
     {
+      if(cmdarray[i] != ' ' || cmdarray[i] != '\n'){
     temp[checker] = cmdarray[i];
     checker++;
+  }
     }
   looker++;
   }
 }
-//  printf("%s\n", temp);
-//cmdline[size] = temp;
-strcpy(cmdline[size], &temp);
-//printf("%s\n", cmdline[size]);
-free(temp);
-printf("%s", cmdline[0]);
+cmdline[size] = temp;
+
+printf("%s\n", temp);
 size++;
 }
-printf("%s", cmdline[1]);
+//printf("%s", cmdline[1]);
+free(temp);
   Path_Res(cmdline, size);
+  envvar(cmdarray);
 
   /* Execution process commands */
-  if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
+    if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
      B_exit(cmdline, size);
   else if(strcmp(cmdline[0], "echo") == 0)
-     echo(cmdline, size);
+   echo(cmdline, size);
   else if(strcmp(cmdline[0], "etime") == 0)
      etime(cmdline, size);
   else if(strcmp(cmdline[0], "io") == 0)
@@ -205,13 +209,15 @@ value[i] = env_var[i]; //have to get rid of null character because its a c strin
  }
  printf("%s\n", value);
  env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
-  //printf(env_value);
+  printf("%s\n",env_value);
   return env_value;
 }
 
 void Path_Res(char **cmdline, int size){
   printf("Path res started");
-  printf("%s", cmdline[0]);
+  for(int i = 0; i < size;i++){
+    printf("%s\n",cmdline[i]);
+  }
 
 
 }
