@@ -1,3 +1,18 @@
+/* Progress remaining:
+ * - Need parsing to parse out spaces correct and not have empty values in 2d array
+ *        - some parsed lines have weird stuff at the end
+          - check my parsing in redirection as a reference? might help @evan
+ * - Path resolution function
+ * - Execution function
+ *        - Add built in function calls even tho parsit does already (mostly for pipeline an redirection)
+ * - Background Processes
+ * - cd function setenv
+ * - io function
+ * - Test each function (particulary pipe and redirection with execution and correct parsing)
+ * - Create Makefile
+ * - Write up README file
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -5,6 +20,7 @@
 #include <sys/utsname.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 void ParseIt(char* input);
 char* envvar(char *cmdarray);
@@ -161,7 +177,19 @@ free(temp);
   envvar(cmdarray);
 
   /* Execution process commands */
+<<<<<<< HEAD
     if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
+=======
+  if(hasPipe > 0){
+	   pipeexe(cmdline, size, hasPipe);
+	   hasPipe = 0;
+  }
+  else if(hasRedir > 0){
+	   redirection(cmdline, size);
+	   hasRedir = 0;
+  }
+  else if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
+>>>>>>> 0c88232d17476f7a1d9eea1b1dda34db8f804bf9
      B_exit(cmdline, size);
   else if(strcmp(cmdline[0], "echo") == 0)
    echo(cmdline, size);
@@ -171,20 +199,9 @@ free(temp);
      io(cmdline, size);
   else if(strcmp(cmdline[0], "cd") == 0)
      cd(cmdline, size);
-  else if(hasPipe > 0){
-	   pipeexe(cmdline, size, hasPipe);
-	   hasPipe = 0;
-  }
-  else if(hasRedir > 0){
-	   redirection(cmdline, size);
-	   hasRedir = 0;
-  }
   else
 	   execution(cmdline, size);
-  /* Because pipelining and redirection both needs execution, it is better off sending them to their own function
-   * to do their respective parts and then call execution. Built-in functions and background processing will also
-   * need execution.
-   */
+  /* Will need built-ins in execution function too */
 }
 
 char* envvar(char *cmdarray){
@@ -223,7 +240,6 @@ void Path_Res(char **cmdline, int size){
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
-	printf("In pipe function\n");
 	/* parse based on pipelines */
 	int index[numpipes + 2]; // +2 to compensate the begining and end which shouldn't have pipes.
 	int indexcounter = 1;
@@ -233,11 +249,9 @@ void pipeexe(char **cmdline, int size, int numpipes){
 
 	// Iterate through cmdline to find index of pipes
 	for(int i = 0; i < size; i++){
-//		printf("Checking args: %s\n", cmdline[i]);
 		if(strcmp(cmdline[i], "|") == 0){
 			index[indexcounter] = i;
 			indexcounter++;
-//			printf("Pipeline at %d\n", i);
 		}
 	}
 
@@ -262,58 +276,156 @@ void pipeexe(char **cmdline, int size, int numpipes){
 	/* end of parsing pipelines */
 
 	/* Implementation */
-
-	int fd[2];
-	int pid, pid2;
+  int fd1[2];
+  int fd2[2];
+	int pid[numpipes + 1];
 
 	for(int i = 0; i < numpipes + 1; i++){
-    pipe(fd); // minor test case with pipe here
-		if(pid = fork() == 0){
-			// Child (cmd1 | cmd2)
-			//pipe(fd);
-			if(pid2 = fork() == 0){ // fork == 0 is in child process
-				// cmd1 (Writer)
-				close(STDOUT_FILENO);
-				dup(fd[1]);
-				close(fd[0]);
-				close(fd[1]);
-				// Execute Command (use command function)
-        //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-				echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-			}
-			else if(pid2 < 0){ // for < 0 is error
-				perror("fork2");
-				exit(1);
-			}
-			else{ // fork > 0 is in parent process
-				// cmd2 (Reader)
-				close(STDIN_FILENO);
-				dup(fd[0]);
-				close(fd[0]);
-				close(fd[1]);
-				// Execute Command (use command function)
-        //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-				echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-        waitpid(pid2, NULL, 0); //trying with pid here
-			}
-		}
-		else if(pid < 0){
-			perror("fork1");
-			exit(1);
-		}
-		else{
-			// Parent (Shell)
-			close(fd[0]);
-			close(fd[1]);
-			//close(fd);
-			printf("IN PARENT SHELL and i is %d\n", i);
-			waitpid(pid, NULL, 0);
-		}
+    if(i == 0){ // First Command
+          pipe(fd1);
+      		if(pid[i] = fork() == 0){ // Child (cmd1 | cmd2)
+              close(STDOUT_FILENO);
+              dup(fd1[1]);
+              close(fd1[0]);
+              close(fd1[1]);
+
+              // Execution
+              //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+              echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+              exit(0);
+           }
+           else if(pid[i] < 0){
+              perror("Pipe error");
+              exit(0);
+      		 }
+     }
+     else if(i == numpipes){ // Last Command
+           pipe(fd2);
+           if(pid[i] = fork() == 0){ // Child (cmd1 | cmd2)
+               close(STDIN_FILENO);
+               dup(fd2[0]);
+               close(fd2[0]);
+               close(fd2[1]);
+
+               // Execution
+               //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+               echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+               exit(0);
+            }
+            else if(pid[i] < 0){
+               perror("Pipe error");
+               exit(0);
+            }
+      }
+      else{
+            pipe(fd1);
+            pipe(fd2);
+            if(pid[i] = fork() == 0){ // Child (cmd1 | cmd2)
+                // Get output as input
+                close(STDOUT_FILENO);
+                dup(fd1[1]);
+                close(fd1[0]); // might need to close after the next dup
+                close(fd1[1]);
+                // Get info as output for next cmd
+                close(STDIN_FILENO);
+                dup(fd2[0]);
+                close(fd2[0]);
+                close(fd2[1]);
+
+                // Execution
+                //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+                echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+                exit(0);
+             }
+             else if(pid[i] < 0){
+                perror("Pipe error");
+                exit(0);
+             }
+      }
 	}
+  for(int i = 0; i < numpipes + 1; i++){ // Parent
+       waitpid(pid[i], NULL, 0);
+  }
+  /* end of pipe implementation */
 }
 
 void redirection(char **cmdline, int size){
+    printf("IN REDIRECTION FUNCTION\n");
+    /* Indexing of redirections */
+    int index = 0; // Only need index for 1 redirection as stated by WenQi
+    for(int i = 0; i < size; i++){
+       if(strcmp(cmdline[i], "<") == 0 || strcmp(cmdline[i], ">") == 0){
+          if(index != 0){
+              // Keep even after finding index, in case there's another redirection symbol
+              perror("Error: Cannot have more than one redirection symbol");
+              exit(0);
+          }
+          index = i;
+       }
+    }
+    printf("AFTER INDEXING\n");
+    /* Error Handling */
+    if(index == 0){
+        perror("Error: No command specified");
+        exit(0);
+    }
+    else if(index == size - 1){
+        perror("Error: No file specified");
+        exit(0);
+    }
+    printf("AFTER ERROR CHECKING\n");
+    /* Parse out redirection symbol and filename */
+    char ** temp = (char **)calloc(size - 2, sizeof(char *));
+    for(int i = 0; i < index; i++){ // get the cmds and args before the redirection symbol
+        temp[i] = (char *)calloc(strlen(cmdline[i]) + 1, sizeof(char));
+        temp[i] = cmdline[i];
+    }
+    for(int i = index + 2; i < size; i++){ // get the args after filename b/c they are considered args too
+        temp[i] = (char *)calloc(strlen(cmdline[i]) + 1, sizeof(char));
+        temp[i] = cmdline[i];
+    }
+    printf("AFTER PARSING\n");
+    /* Implementation */
+    int fd, pid;
 
+    if(pid = fork() == 0){ // child process
+        if(strcmp(cmdline[index], ">") == 0){ // Output Redirection
+            // Create file if it doesn't exist, overwrite if it does
+            fd = open(cmdline[index + 1], O_CREAT | O_TRUNC | O_WRONLY);
+            close(STDOUT_FILENO);
+            dup(fd);
+            close(fd);
+        }
+        else if(strcmp(cmdline[index], "<") == 0){ // Input Redirection
+            fd = open(cmdline[index + 1], O_RDONLY);
+            close(STDIN_FILENO);
+            dup(fd);
+            close(fd);
+        }
+        else{
+            // Shouldn't be reached but here for safety measures
+            perror("Redirection implementation error");
+            exit(0);
+        }
+
+        // Execution
+        //execution(2dtemp, size - 2);
+        echo(temp, size - 2);
+    }
+    else if(pid < 0){
+        perror("Fork error in redirection function");
+        exit(0);
+    }
+    else{ // parent process
+        close(fd);
+    }
+    printf("AFTER IMPLEMENTATION\n");
+    /* Memory Clean-up */
+    for(int i = 0; i < size - 2; i++){
+        printf("I is %d", i);
+        free(temp[i]);
+    }
+    free(temp);
 }
 
 void execution(char **cmdline, int size){
@@ -323,20 +435,28 @@ void execution(char **cmdline, int size){
 
 /* Built-ins */
 int B_exit(char **args, int size){
-	printf("Exiting Shell....");
+	printf("Exiting Shell....\n");
 	exit(0);
 }
 
 void cd(char **args, int size){
-	if(args[1] == NULL){ // If no args, $HOME is the arg
+  printf("size is %d\n", size);
+  args[1] = envvar(args[1]);
+  for(int i = 0; i < size; i++)
+    printf("content: %s\n", args[i]);
+	if(size < 2){ // If no args, $HOME is the arg
 		//char * home = "$HOME"; // String for $HOME
-	   strcpy(args[1], envvar("$HOME")); // Pass through env_var and copy to args[1]
+	   args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
 	}
 	 // Signals error if target is not a directory
   // Path resolution is predetermined already
 	if(chdir(args[1]) != 0){
 	   perror("Error");
+     B_exit(args, size);
 	}
+  //if(setenv(envvar("$PWD"), args[1], 1) != 0){
+     //perror("Unable to set PWD");
+  //}
 }
 
 void echo(char **args, int size){
@@ -357,6 +477,7 @@ void echo(char **args, int size){
 }
 
 void etime(char **args, int size){
+  long sec, msec;
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 
@@ -365,8 +486,13 @@ void etime(char **args, int size){
   // passes in by starting from the next command and decrease size to compensate
 
 	gettimeofday(&end, NULL);
-	printf("Elapsed Time: %ld.%06ld\n", end.tv_sec - start.tv_sec, end.tv_usec - start.tv_usec);
-	// Not sure if subtracting the microseconds will return a negative at times?
+  sec = end.tv_sec - start.tv_sec;
+  msec = end.tv_usec - start.tv_sec;
+  if(msec < 0){
+      sec -= 1;
+      msec += 1;
+  }
+	printf("Elapsed Time: %ld.%06ld\n", sec, msec); //end.tv_sec - start.tv_sec, end.tv_usec - start.tv_usec);
 }
 
 void io(char **args, int size){
