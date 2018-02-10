@@ -2,16 +2,24 @@
  * - Need parsing to parse out spaces correct and not have empty values in 2d array
  *        - some parsed lines have weird stuff at the end
           - check my parsing in redirection as a reference? might help @evan
+<<<<<<< HEAD
           Parsing FIXED s
+=======
+          Parsing FIXED
+>>>>>>> fd32dcd8ab79341cb596055961c61a91f54fb15d
  * - Path resolution function
  * - Execution function
  *        - Add built in function calls even tho parsit does already (mostly for pipeline an redirection)
  * - Background Processes
- * - cd function setenv
- * - io function
- * - Test each function (particulary pipe and redirection with execution and correct parsing)
+ * - Test each function, particularly:
+          - setenv of cd
+          - io FUNCTION
+          - execution FUNCTION (pipe and redirection with execution)
+          - envvar FUNCTION
+          - background processes
  * - Create Makefile
  * - Write up README file
+ * - Get rid of warnings if possible, currently 2
  */
 
 #include <stdio.h>
@@ -268,9 +276,7 @@ Path_Res(cmdline, size);
 //envvar(cmdarray);
 
   /* Execution process commands */
-//<<<<<<< HEAD
     if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
-//=======
   if(hasPipe > 0){
 	   pipeexe(cmdline, size, hasPipe);
 	   hasPipe = 0;
@@ -280,7 +286,6 @@ Path_Res(cmdline, size);
 	   hasRedir = 0;
   }
   else if(strcmp(cmdline[0], "exit") == 0) // not sure why this only works with exit with a space
-//>>>>>>> 0c88232d17476f7a1d9eea1b1dda34db8f804bf9
      B_exit(cmdline, size);
   else if(strcmp(cmdline[0], "echo") == 0)
    echo(cmdline, size);
@@ -553,9 +558,9 @@ void cd(char **args, int size){
 	   perror("Error");
      B_exit(args, size);
 	}
-  //if(setenv(envvar("$PWD"), args[1], 1) != 0){
-     //perror("Unable to set PWD");
-  //}
+  if(setenv("PWD", args[1], 1) != 0){
+     perror("Unable to set PWD");
+  }
 }
 
 void echo(char **args, int size){
@@ -595,7 +600,53 @@ void etime(char **args, int size){
 }
 
 void io(char **args, int size){
+    int pid;
+    if(pid = fork() == 0){ // child process
+        execution(args + 1, size - 1);
+        exit(0); //might not need this
+    }
+    else if(pid < 0){
+        perror("io fork error");
+        exit(0);
+    }
+    else{
+        // create filepath /proc/<pid>/io
+        FILE *fp;
+        char * start = "/proc/";
+        char * end = "/io";
+        char file[20]; // Assuming pid is no bigger than 10 digits
+        char * pidvalue = (char *) &pid; // convert int to char array
+        strcat(file, start);
+        strcat(file, pidvalue);
+        strcat(file, end);
 
+        // Testing correct values
+        printf("PID: %d\nPID String: %s\nFile: %s\n", pid, pidvalue, file);
+
+        fp = fopen(file, "r");
+        if(fp != NULL){
+            char line[50]; // Assuming no more than 50 char per line
+            while(fgets(line, 50, fp)){
+                //printf("%s\n", line); // Print each line of file (doing this if tokenizing doesnt work)
+                // Tokenize each line
+                int size = strlen(line);
+                int index = strchr(line, ':') - line + 1; // find index of : and index to next char
+                char * record = (char *)calloc(index + 1, sizeof(char));
+                char * value = (char *)calloc(size - index + 1, sizeof(char));
+                printf("%s%40s\n", record, value);
+                free(record);
+                free(value);
+            }
+        }
+        else{
+            perror("Could not open file in io");
+            exit(0);
+        }
+
+        /* Clean-up */
+        free(start);
+        free(end);
+    }
 }
 
 
