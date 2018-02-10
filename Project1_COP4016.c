@@ -282,8 +282,6 @@ cmdline[i] = temp;
     }
   }
 Path_Res(cmdline, size);
-printf("%d\n" , strlen("exit"));
-printf("%s", cmdline[1]);
 //envvar(cmdarray);
 
   /* Execution process commands */
@@ -340,6 +338,7 @@ value[i] = env_var[i]; //have to get rid of null character because its a c strin
 void Path_Res(char **cmdline, int size){
   int done = 0;
   int cmdline_counter = 0;
+  char *Pwd_holder = (char *)calloc(15, sizeof(char *));
   for(int i = 0; i < size;i++){
       for(int a = 0; a < strlen(cmdline[i]); a++){
     if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.' && done == 0){
@@ -352,10 +351,11 @@ void Path_Res(char **cmdline, int size){
         cmdline_counter++;
       }
     }
-     char *Pwd_holder;
      Pwd_holder = getenv("PWD");
      strcat(Pwd_holder, cmdline[i]);
-    printf("%s\n", Pwd_holder);
+    free(cmdline[i]);
+    cmdline[i] = Pwd_holder;
+    printf("%s\n", cmdline[i]);
       }
     }
   }
