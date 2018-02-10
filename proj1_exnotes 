@@ -1,22 +1,12 @@
 
   printf("%s", cmdline);
   for (int i = 0; i < (size); i++){
-    for(int a = 0; a < strlen(&cmdline[i][a]); a++){
+
       printf("%c" ,cmdline[i][a]);
     if(cmdline[i][a] == '.'){
     //DO nothing since we're already in this current directory
     }
-    if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.'){
-      char cwd[200];
-      char *temp;
-      temp = (char *)calloc(strlen(cmdline[i]), sizeof(char));
-      if (getcwd(cwd, sizeof(cwd)) == NULL){
-         perror("getcwd() error");
-        }
-       else{
-        //printf( "%s", cwd);
-       //fprintf(stdout, "%s", direc);
-     }
+
      char *previous_direc  =  getenv("$PWD");
      printf("%s", getenv("$PWD"));
   /*   for(int i = strlen(cwd) - 1; i > 0; i--){
@@ -70,3 +60,24 @@
 
       }
     }
+
+
+
+
+
+
+    while(i != strlen(cmdarray)){
+    if (cmdarray[i] == '*'){
+
+      }
+    else{
+    temp[checker] = cmdarray[i];
+    checker++;
+    }
+      if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+    cmdline[size]  = temp;
+    size = size + 1;
+        }
+    i++;
+    }
+    size = size - 1;
