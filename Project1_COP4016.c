@@ -2,7 +2,7 @@
  * - Need parsing to parse out spaces correct and not have empty values in 2d array
  *        - some parsed lines have weird stuff at the end
           - check my parsing in redirection as a reference? might help @evan
-          Parsing FIXED 
+          Parsing FIXED s
  * - Path resolution function
  * - Execution function
  *        - Add built in function calls even tho parsit does already (mostly for pipeline an redirection)
@@ -130,68 +130,142 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
     }
     printf("%s", cmdarray);
     char ** cmdline;
-    char * temp;
-    char * newtemp;
-    int checker = 0;
-    int looker = 0;
-    int looker_two = 0;
+    int i = 0;
+    int counter = 0;
+    int numofcommand = 0;
     int size = 0;
-    int test = 0;
-    int make = 0;
+    int cmd1counter = 0;
+    int cmd2counter = 0;
+    int cmd3counter = 0;
+    int cmd4counter = 0;
+    int cmd5counter = 0;
+    int cmd6counter = 0;
+    int cmd7counter = 0;
+    int cmd8counter = 0;
+    int cmd9counter = 0;
+    int cmd10counter = 0;
+    int cmd11counter = 0;
+    char * cmd1 = (char *)calloc(25, sizeof(char *));
+    char * cmd2 = (char *)calloc(25, sizeof(char *));
+    char * cmd3 = (char *)calloc(25, sizeof(char *));
+    char * cmd4 = (char *)calloc(25, sizeof(char *));
+    char * cmd5 = (char *)calloc(25, sizeof(char *));
+    char * cmd6 = (char *)calloc(25, sizeof(char *));
+    char * cmd7 = (char *)calloc(25, sizeof(char *));
+    char * cmd8 = (char *)calloc(25, sizeof(char *));
+    char * cmd9 = (char *)calloc(25, sizeof(char *));
+    char * cmd10 = (char *)calloc(25, sizeof(char *));
+    char * cmd11 = (char *)calloc(25, sizeof(char *));
     cmdline = (char **)calloc(strlen(cmdarray), sizeof(char **));
-while(test == 0){
-temp = (char *)calloc(strlen(cmdarray), sizeof(char *));
-for(int i = looker; i < strlen(cmdarray); i++){
-  if(cmdarray[i] != '*'){
-        make = 1;
-  }
-  if (make == 1){
-  if(i == strlen(cmdarray) || i  == (strlen(cmdarray) - 1)){
-  //  printf("This ran");
-    test = 1;
-  }
-  if(cmdarray[i] == '*'){
-    checker = 0;
-  //  if(looker < strlen(cmdarray)){
-    ++looker;
-//}
-    break;
-    }
-  else
-    {
-      if(cmdarray[i] != ' ' || cmdarray[i] != '\n'){
-    temp[checker] = cmdarray[i];
-    checker++;
-  }
-    }
-  looker++;
-  }
+while(i != strlen(cmdarray)){
+if(cmdarray[i] == '*'){
+
+
 }
-  int checker = 0;
-  for(int i = 0; i < strlen(temp);i++){
-    if(temp[i] == '\n'){
-
+else if(numofcommand == 0){
+  cmd1[cmd1counter] = cmdarray[i];
+  cmd1counter = cmd1counter + 1;
+    if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+      cmdline[size] = cmd1;
+      size = size + 1;
+      numofcommand++;
+        }
     }
-    if(temp[i] == ' '){
-
-    }
-    if(temp[i] == '\0'){
-
-    }
-    else{
-      temp[checker] = temp[i];
-      checker++;
-    }
-  }
-  //temp = (char *)calloc(checker, sizeof(char *));
-cmdline[size] = temp;
-printf("%s\n", temp);
-size++;
+   else if(numofcommand == 1){
+    cmd2[cmd2counter] = cmdarray[i];
+    cmd2counter++;
+      if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+        cmdline[size] = cmd2;
+        size = size + 1;
+        numofcommand++;
+          }
+      }
+      else if(numofcommand == 2){
+       cmd3[cmd3counter] = cmdarray[i];
+       cmd3counter++;
+         if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){ //Seperate Pointer for each spot in the array
+           cmdline[size] = cmd3;
+           size = size + 1;
+           numofcommand++;
+             }
+         }
+         else if(numofcommand == 3){
+          cmd4[cmd4counter] = cmdarray[i];
+          cmd4counter++;
+            if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+              cmdline[size] = cmd4;
+              size = size + 1;
+              numofcommand++;
+                }
+            }
+            else if(numofcommand == 4){
+             cmd5[cmd5counter] = cmdarray[i];
+             cmd5counter++;
+               if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+                 cmdline[size] = cmd5;
+                 size = size + 1;
+                 numofcommand++;
+                   }
+               }
+               else if(numofcommand == 5){
+                cmd6[cmd6counter] = cmdarray[i];
+                cmd6counter++;
+                  if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+                    cmdline[size] = cmd6;
+                    size = size + 1;
+                    numofcommand++;
+                      }
+                  }
+                  else if(numofcommand == 6){
+                   cmd7[cmd7counter] = cmdarray[i];
+                   cmd7counter++;
+                     if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+                       cmdline[size] = cmd7;
+                       size = size + 1;
+                       numofcommand++;
+                         }
+                     }
+                     else if(numofcommand == 7){
+                      cmd8[cmd8counter] = cmdarray[i];
+                      cmd8counter++;
+                        if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+                          cmdline[size] = cmd8;
+                          size = size + 1;
+                          numofcommand++;
+                            }
+                        }
+                        else if(numofcommand == 8){
+                         cmd9[cmd9counter] = cmdarray[i];
+                         cmd9counter++;
+                           if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+                             cmdline[size] = cmd9;
+                             size = size + 1;
+                             numofcommand++;
+                               }
+                           }
+                           else if(numofcommand == 9){
+                            cmd10[cmd10counter] = cmdarray[i];
+                            cmd10counter++;
+                              if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+                                cmdline[size] = cmd10;
+                                size = size + 1;
+                                numofcommand++;
+                                  }
+                              }
+                              else if(numofcommand == 10){
+                               cmd11[cmd11counter] = cmdarray[i];
+                               cmd11counter++;
+                                 if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
+                                   cmdline[size] = cmd11;
+                                   size = size + 1;
+                                   numofcommand++;
+                                     }
+                                 }
+  i++;
 }
-//printf("%s", cmdline[1]);
 
 Path_Res(cmdline, size);
-envvar(cmdarray);
+//envvar(cmdarray);
 
   /* Execution process commands */
 //<<<<<<< HEAD
@@ -243,16 +317,25 @@ value[i] = env_var[i]; //have to get rid of null character because its a c strin
  }
 // printf("%s\n", value);
  env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
-//  printf("%s\n",env_value);
+ printf("%s\n",env_value);
   return env_value;
 }
 
 void Path_Res(char **cmdline, int size){
   printf("Path res started");
+  int a = 0;
   for(int i = 0; i < size;i++){
-printf("%s\n", cmdline[i]);
+      for(int a = 0; a < strlen(cmdline[i]); a++){
+    if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.'){
+      printf(".. was found\n");
+     char *Pwd_holder;
+     Pwd_holder = getenv("$HOME");
+     printf("%s", getenv("$HOME"));
+     //strcat(cmdline[i], Pwd_holder);
+     printf("%s", Pwd_holder);
+      }
+    }
   }
-
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
