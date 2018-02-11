@@ -153,17 +153,17 @@ cmdarray[cmd_array_counter] = '*'; // add an asterisk for every space
     int cmd9counter = 0;
     int cmd10counter = 0;
     int cmd11counter = 0;
-    char * cmd1 = (char *)calloc(25, sizeof(char *));
-    char * cmd2 = (char *)calloc(25, sizeof(char *));
-    char * cmd3 = (char *)calloc(25, sizeof(char *));
-    char * cmd4 = (char *)calloc(25, sizeof(char *));
-    char * cmd5 = (char *)calloc(25, sizeof(char *));
-    char * cmd6 = (char *)calloc(25, sizeof(char *));
-    char * cmd7 = (char *)calloc(25, sizeof(char *));
-    char * cmd8 = (char *)calloc(25, sizeof(char *));
-    char * cmd9 = (char *)calloc(25, sizeof(char *));
-    char * cmd10 = (char *)calloc(25, sizeof(char *));
-    char * cmd11 = (char *)calloc(25, sizeof(char *));
+    char * cmd1 = (char *)calloc(15, sizeof(char *));
+    char * cmd2 = (char *)calloc(15, sizeof(char *));
+    char * cmd3 = (char *)calloc(15, sizeof(char *));
+    char * cmd4 = (char *)calloc(15, sizeof(char *));
+    char * cmd5 = (char *)calloc(15, sizeof(char *));
+    char * cmd6 = (char *)calloc(15, sizeof(char *));
+    char * cmd7 = (char *)calloc(15, sizeof(char *));
+    char * cmd8 = (char *)calloc(15, sizeof(char *));
+    char * cmd9 = (char *)calloc(15, sizeof(char *));
+    char * cmd10 = (char *)calloc(15, sizeof(char *));
+    char * cmd11 = (char *)calloc(15, sizeof(char *));
     cmdline = (char **)calloc(strlen(cmdarray), sizeof(char **));
 while(i != strlen(cmdarray)){
 if(cmdarray[i] == '*'){
@@ -172,7 +172,7 @@ if(cmdarray[i] == '*'){
 }
 else if(numofcommand == 0){
   cmd1[cmd1counter] = cmdarray[i];
-  cmd1counter = cmd1counter + 1;
+  cmd1counter++;
     if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
       cmdline[size] = cmd1;
       size = size + 1;
@@ -265,13 +265,22 @@ else if(numofcommand == 0){
                                cmd11counter++;
                                  if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
                                    cmdline[size] = cmd11;
-                                   size = size + 1;
+                                    printf("%s", cmdline[i]);   size = size + 1;
                                    numofcommand++;
                                      }
                                  }
   i++;
 }
+char * temp = (char *)calloc(15, sizeof(char *));
+int another_counter = 0;
+for(int i = 0; i < size ;i++){
+  if(cmdline[i+1] == NULL){
+    printf("%s", cmdline[i]);
+strncpy(temp, cmdline[i], (strlen(cmdline[i]) - 1));
+cmdline[i] = temp;
 
+    }
+  }
 Path_Res(cmdline, size);
 //envvar(cmdarray);
 
@@ -315,7 +324,7 @@ for (int i = 0; i < strlen(cmdarray); i++){
     }
   }
    //printf("%s", env_var);
-char value[150] = {' '};
+char value[150] = {' '};printf("Path res started");
 char *env_value;
 for(int i = 0;i < strlen(env_var) - 1; i++) {
 value[i] = env_var[i]; //have to get rid of null character because its a c string
@@ -327,17 +336,40 @@ value[i] = env_var[i]; //have to get rid of null character because its a c strin
 }
 
 void Path_Res(char **cmdline, int size){
-  printf("Path res started");
-  int a = 0;
+  int done = 0;
+  int cmdline_counter = 0;
+  char *Pwd_holder = (char *)calloc(15, sizeof(char *));
+  char *checkit = (char *)calloc(15, sizeof(char *));
   for(int i = 0; i < size;i++){
       for(int a = 0; a < strlen(cmdline[i]); a++){
-    if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.'){
-      printf(".. was found\n");
-     char *Pwd_holder;
-     Pwd_holder = getenv("$HOME");
-     printf("%s", getenv("$HOME"));
-     //strcat(cmdline[i], Pwd_holder);
-     printf("%s", Pwd_holder);
+    if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.' && done == 0){
+      for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
+        if(cmdline[i][b] == '.'){
+
+        }
+        else {
+        cmdline[i][cmdline_counter] = cmdline[i][b];
+        cmdline_counter++;
+      }
+    }
+     Pwd_holder = getenv("PWD");
+     strrev(Pwd_holder);
+     int boi = 0;
+     int checkit_counter = 0;
+     for(int b = 0;b < strlen(Pwd_holder); b++){
+       if(Pwd_holder[b] == '/'){
+         boi++;
+       }
+       if(boi > 0){
+        checkit[checkit_counter] = Pwd_holder[b + 1];
+        checkit_counter++;
+       }
+     }
+     strrev(checkit);
+     strcat(checkit, cmdline[i]);
+    free(cmdline[i]);
+    cmdline[i] = checkit;
+    printf("%s\n", cmdline[i]);
       }
     }
   }
