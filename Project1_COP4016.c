@@ -339,6 +339,7 @@ void Path_Res(char **cmdline, int size){
   int done = 0;
   int cmdline_counter = 0;
   char *Pwd_holder = (char *)calloc(15, sizeof(char *));
+  char *checkit = (char *)calloc(15, sizeof(char *));
   for(int i = 0; i < size;i++){
       for(int a = 0; a < strlen(cmdline[i]); a++){
     if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.' && done == 0){
@@ -352,9 +353,22 @@ void Path_Res(char **cmdline, int size){
       }
     }
      Pwd_holder = getenv("PWD");
-     strcat(Pwd_holder, cmdline[i]);
+     strrev(Pwd_holder);
+     int boi = 0;
+     int checkit_counter = 0;
+     for(int b = 0;b < strlen(Pwd_holder); b++){
+       if(Pwd_holder[b] == '/'){
+         boi++;
+       }
+       if(boi > 0){
+        checkit[checkit_counter] = Pwd_holder[b + 1];
+        checkit_counter++;
+       }
+     }
+     strrev(checkit);
+     strcat(checkit, cmdline[i]);
     free(cmdline[i]);
-    cmdline[i] = Pwd_holder;
+    cmdline[i] = checkit;
     printf("%s\n", cmdline[i]);
       }
     }
