@@ -1,24 +1,21 @@
 /* Progress remaining:
  * - Need parsing to parse out spaces correct and not have empty values in 2d array
  *        - some parsed lines have weird stuff at the end
-          - check my parsing in redirection as a reference? might help @evan
-<<<<<<< HEAD
-          Parsing FIXED s
-=======
-          Parsing FIXED
->>>>>>> fd32dcd8ab79341cb596055961c61a91f54fb15d
+          - cmd (cmd + space) creates two pointers instead of only one
  * - Path resolution function
  * - Execution function
  *        - Add built in function calls even tho parsit does already (mostly for pipeline an redirection)
  * - Background Processes
  * - Test each function, particularly:
-          - setenv of cd
+          - cd (setenv and when path resolution is done)
           - io FUNCTION
           - execution FUNCTION (pipe and redirection with execution)
           - envvar FUNCTION
+          - Path resolutions
           - background processes
  * - Create Makefile
  * - Write up README file
+ * - Clean up comments, printf, etc
  * - Get rid of warnings if possible, currently 2
  */
 
@@ -376,6 +373,7 @@ void Path_Res(char **cmdline, int size){
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
+  printf("In pipe function\n");
 	/* parse based on pipelines */
 	int index[numpipes + 2]; // +2 to compensate the begining and end which shouldn't have pipes.
 	int indexcounter = 1;
@@ -565,7 +563,7 @@ void redirection(char **cmdline, int size){
 }
 
 void execution(char **cmdline, int size){
-
+    printf("IN EXECUTION FUNCTION\n");
 
 }
 
@@ -576,22 +574,30 @@ int B_exit(char **args, int size){
 }
 
 void cd(char **args, int size){
+  printf("IN CD FUNCTION\n");
   printf("size is %d\n", size);
   args[1] = envvar(args[1]);
   for(int i = 0; i < size; i++)
-    printf("content: %s\n", args[i]);
+     printf("content: %s\n", args[i]);
 	if(size < 2){ // If no args, $HOME is the arg
-		//char * home = "$HOME"; // String for $HOME
-	   args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
+     //args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
+     if(chdir(envvar("$HOME")) != 0){
+         perror("Error changing directory to $HOME");
+         B_exit(args, size);
+     }
+     if(setenv("PWD", envvar("$HOME"), 1) != 0){
+         perror("Unable to set $PWD");
 	}
 	 // Signals error if target is not a directory
   // Path resolution is predetermined already
-	if(chdir(args[1]) != 0){
-	   perror("Error");
-     B_exit(args, size);
-	}
-  if(setenv("PWD", args[1], 1) != 0){
-     perror("Unable to set PWD");
+  else{ // Currently doesnt work with .. possibly because of path resolution
+      if(chdir(args[1]) != 0){
+	        perror("Error");
+          B_exit(args, size);
+      }
+      if(setenv("PWD", args[1], 1) != 0){
+          perror("Unable to set $PWD");
+      }
   }
 }
 
@@ -613,12 +619,14 @@ void echo(char **args, int size){
 }
 
 void etime(char **args, int size){
+  printf("IN ETIME FUNCTION\n");
   long sec, msec;
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 
 	// take out "etime" and pass to execute function
-  execution(args + 1, size - 1);
+  //execution(args + 1, size - 1);
+  echo(args + 1, size - 1);
   // passes in by starting from the next command and decrease size to compensate
 
 	gettimeofday(&end, NULL);
@@ -632,6 +640,7 @@ void etime(char **args, int size){
 }
 
 void io(char **args, int size){
+    printf("IN IO FUNCTION\n");
     int pid;
     if(pid = fork() == 0){ // child process
         execution(args + 1, size - 1);
