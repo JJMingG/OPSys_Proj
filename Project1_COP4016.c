@@ -269,7 +269,7 @@ void ParseIt(char* input){
     char * temp = (char *)calloc(15, sizeof(char *));
     int another_counter = 0;
     for(int i = 0; i < size ;i++){
-        if(cmdline[i+1] == NULL){
+        if(cmdline[i+1] == NULL || cmdline[i+1] == ' '){
             printf("%s", cmdline[i]);
             strncpy(temp, cmdline[i], (strlen(cmdline[i]) - 1));
             cmdline[i] = temp;
@@ -331,9 +331,14 @@ char* envvar(char *cmdarray){
 
 void Path_Res(char **cmdline, int size){
     int done = 0;
-    int cmdline_counter = 0;
-    char *Pwd_holder = (char *)calloc(15, sizeof(char *));
+    int cmdline_counter_double_dot = 0;
+    int cmdline_counter_single_dot = 0;
+    int cmdline_tilda = 0;
+    char *Pwd_holder_double_dot = (char *)calloc(15, sizeof(char *));
+    char *Pwd_holder_single_dot = (char *)calloc(15, sizeof(char *));
+    char *Pwd_holder_tilda = (char *)calloc(15, sizeof(char *));
     char *checkit = (char *)calloc(15, sizeof(char *));
+    char *checkit_tilda = (char *)calloc(15, sizeof(char *));
     for(int i = 0; i < size;i++){
         for(int a = 0; a < strlen(cmdline[i]); a++){
             if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.' && done == 0){
@@ -341,20 +346,20 @@ void Path_Res(char **cmdline, int size){
                     if(cmdline[i][b] == '.'){
                     }
                     else {
-                        cmdline[i][cmdline_counter] = cmdline[i][b];
-                        cmdline_counter++;
+                        cmdline[i][cmdline_counter_double_dot] = cmdline[i][b];
+                        cmdline_counter_double_dot++;
                     }
                 }
-                Pwd_holder = getenv("PWD");
-                strrev(Pwd_holder);
+                Pwd_holder_double_dot = getenv("PWD");
+                strrev(Pwd_holder_double_dot);
                 int boi = 0;
                 int checkit_counter = 0;
-                for(int b = 0;b < strlen(Pwd_holder); b++){
-                    if(Pwd_holder[b] == '/'){
+                for(int b = 0;b < strlen(Pwd_holder_double_dot); b++){
+                    if(Pwd_holder_double_dot[b] == '/'){
                         boi++;
                     }
                     if(boi > 0){
-                        checkit[checkit_counter] = Pwd_holder[b + 1];
+                        checkit[checkit_counter] = Pwd_holder_double_dot[b + 1];
                         checkit_counter++;
                     }
                 }
@@ -363,6 +368,49 @@ void Path_Res(char **cmdline, int size){
                 free(cmdline[i]);
                 cmdline[i] = checkit;
                 printf("%s\n", cmdline[i]);
+            }
+            if(cmdline[i][a] == '.'){
+              for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
+                  if(cmdline[i][b] == '.'){
+                  }
+                  else {
+                      cmdline[i][cmdline_counter_single_dot] = cmdline[i][b];
+                      cmdline_counter_single_dot++;
+                  }
+              }
+            Pwd_holder_single_dot = getenv("PWD");
+            strcat(Pwd_holder_single_dot, cmdline[i]);
+            free(cmdline[i]);
+            cmdline[i] = Pwd_holder_single_dot;
+            printf("%s", cmdline[i]);
+            }
+            if(cmdline[i][a] == '~'){
+              for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
+                  if(cmdline[i][b] == '~'){
+                  }
+                  else {
+                      cmdline[i][cmdline_tilda] = cmdline[i][b];
+                      cmdline_tilda++;
+                  }
+              }
+              Pwd_holder_tilda = getenv("HOME");
+              strrev(Pwd_holder_tilda);
+              int backslash_checker = 0;
+              int checkit_counter = 0;
+              for(int b = 0;b < strlen(Pwd_holder_tilda); b++){
+                  if(Pwd_holder_tilda[b] == '/'){
+                      backslash_checker++;
+                  }
+                  if(backslash_checker > 0){
+                      checkit_tilda[checkit_counter] = Pwd_holder_tilda[b + 1];
+                      checkit_counter++;
+                  }
+              }
+              strrev(checkit_tilda);
+              strcat(checkit_tilda, cmdline[i]);
+              free(cmdline[i]);
+              cmdline[i] = checkit_tilda;
+              printf("%s\n", cmdline[i]);
             }
         }
     }
@@ -598,6 +646,7 @@ void cd(char **args, int size){
             perror("Unable to set $PWD");
         }
     }
+  }
 }
 
 void echo(char **args, int size){
