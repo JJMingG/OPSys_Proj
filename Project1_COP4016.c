@@ -304,6 +304,7 @@ void ParseIt(char* input){
 }
 
 char* envvar(char *cmdarray){
+    printf("IN ENVVAR - need to test completely\n");
     char env_var[200];
     int a = 0;
     for (int i = 0; i < strlen(cmdarray); i++){
@@ -330,6 +331,7 @@ char* envvar(char *cmdarray){
 }
 
 void Path_Res(char **cmdline, int size){
+    printf("In path resolution - Not finished and need to test\n");
     int done = 0;
     int cmdline_counter = 0;
     char *Pwd_holder = (char *)calloc(15, sizeof(char *));
@@ -369,7 +371,7 @@ void Path_Res(char **cmdline, int size){
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
-    printf("In pipe function\n");
+    printf("In pipe function - completely tested with echo but not execution\n");
 	  /* parse based on pipelines */
 	  int index[numpipes + 2]; // +2 to compensate the begining and end which shouldn't have pipes.
 	  int indexcounter = 1;
@@ -480,7 +482,7 @@ void pipeexe(char **cmdline, int size, int numpipes){
 }
 
 void redirection(char **cmdline, int size){
-    printf("IN REDIRECTION FUNCTION\n");
+    printf("IN REDIRECTION FUNCTION - Completely tested with echo but not execution\n");
     /* Indexing of redirections */
     int index = 0; // Only need index for 1 redirection as stated by WenQi
     for(int i = 0; i < size; i++){
@@ -544,13 +546,15 @@ void redirection(char **cmdline, int size){
         // Execution
         //execution(2dtemp, size - 2);
         echo(temp, size - 2);
+        exit(0);
     }
     else if(pid < 0){
         perror("Fork error in redirection function");
         exit(0);
     }
     else{ // parent process
-        close(fd);
+        close(fd); // Probably not necessary?
+        waitpid(pid, NULL, 0);
     }
     printf("AFTER IMPLEMENTATION\n");
     /* Memory Clean-up */
@@ -562,7 +566,7 @@ void redirection(char **cmdline, int size){
 }
 
 void execution(char **cmdline, int size){
-    printf("IN EXECUTION FUNCTION\n");
+    printf("IN EXECUTION FUNCTION - not finished, not tested\n");
 
 }
 
@@ -573,9 +577,8 @@ int B_exit(char **args, int size){
 }
 
 void cd(char **args, int size){
-    printf("IN CD FUNCTION\n");
+    printf("IN CD FUNCTION - Need to test completely\n");
     printf("size is %d\n", size);
-    args[1] = envvar(args[1]);
     for(int i = 0; i < size; i++)
         printf("content: %s\n", args[i]);
 	  if(size < 2){ // If no args, $HOME is the arg
@@ -587,9 +590,10 @@ void cd(char **args, int size){
         if(setenv("PWD", envvar("$HOME"), 1) != 0){
             perror("Unable to set $PWD");
 	      }
+    }
 	  // Signals error if target is not a directory
     // Path resolution is predetermined already
-    else{ // Currently doesnt work with .. possibly because of path resolution
+    else{
         if(chdir(args[1]) != 0){
 	          perror("Error");
             B_exit(args, size);
@@ -601,36 +605,42 @@ void cd(char **args, int size){
 }
 
 void echo(char **args, int size){
+    printf("In ECHO - Need to test with path resolution\n");
     //outputs whatever user specifies
 	  //for each argument:
 		    //look up the argument in the list of environment variables
 		    //print the value if it exists
 		    //signal an error if it does not exist
     for(int i = 1; i < size; i++){
-        if (strcmp(args[i], "$") == 0){ // environmental variable
-            printf("%s ", envvar(args[i + 1])); // envvar will print out error message if it does not exist
-            i++; // arg is in next index after the $ so increemnt to skip
+        if (args[i][0] == '$'){
+            // environmental variable
+            //printf("HERE is %s\n", envvar(args[i]));
+            printf("%s ", envvar(args[i])); // envvar will print out error message if it does not exist
+            i++; // arg is in next index after the $ so increment to skip
         }
-        else
+        else{
             printf("%s ", args[i]);
+        }
     }
     printf("\n");
 }
 
 void etime(char **args, int size){
-    printf("IN ETIME FUNCTION\n");
+    printf("IN ETIME FUNCTION - Fully tested and fully functional\n");
     long sec, msec;
 	  struct timeval start, end;
-	  gettimeofday(&start, NULL);
+	  gettimeofday(&start, NULL); // get start time
 
 	  // take out "etime" and pass to execute function
     //execution(args + 1, size - 1);
     echo(args + 1, size - 1);
     // passes in by starting from the next command and decrease size to compensate
 
-	  gettimeofday(&end, NULL);
+	  gettimeofday(&end, NULL); // get end time
+
+    // Calculations
     sec = end.tv_sec - start.tv_sec;
-    msec = end.tv_usec - start.tv_sec;
+    msec = end.tv_usec - start.tv_usec;
     if(msec < 0){ // computing for negative microseconds
         sec -= 1;
         msec += 1;
@@ -639,53 +649,49 @@ void etime(char **args, int size){
 }
 
 void io(char **args, int size){
-    printf("IN IO FUNCTION\n");
+    printf("IN IO FUNCTION - Fully tested and fully functional\n");
     int pid;
     if(pid = fork() == 0){ // child process
-        execution(args + 1, size - 1);
+        // Execution
+        //execution(args + 1, size - 1);
+        echo(args + 1, size - 1);
         exit(0); //might not need this
     }
     else if(pid < 0){
         perror("io fork error");
-        exit(0);
+        B_exit(args, size);
     }
     else{
+        waitpid(pid, NULL, 0);
+
         // create filepath /proc/<pid>/io
         FILE *fp;
-        char * start = "/proc/";
-        char * end = "/io";
-        char file[20]; // Assuming pid is no bigger than 10 digits
-        char * pidvalue = (char *) &pid; // convert int to char array
-        strcat(file, start);
-        strcat(file, pidvalue);
-        strcat(file, end);
+        char file[20] = "\0"; // This assumes pid with at max be 10 digits
+        sprintf(file,"/proc/%d/io", getppid());
 
-        // Testing correct values
-        printf("PID: %d\nPID String: %s\nFile: %s\n", pid, pidvalue, file);
-
+        // Open the file and read each line
         fp = fopen(file, "r");
         if(fp != NULL){
             char line[50]; // Assuming no more than 50 char per line
             while(fgets(line, 50, fp)){
-                //printf("%s\n", line); // Print each line of file (doing this if tokenizing doesnt work)
                 // Tokenize each line
                 int size = strlen(line);
                 int index = strchr(line, ':') - line + 1; // find index of : and index to next char
-                char * record = (char *)calloc(index + 1, sizeof(char));
-                char * value = (char *)calloc(size - index + 1, sizeof(char));
-                printf("%s%40s\n", record, value);
+                char * record = (char *)calloc(index + 2, sizeof(char));
+                char * value = (char *)calloc((size + 1) - (index + 1), sizeof(char));
+                strncpy(record, line, index + 1);
+                strncpy(value, line + index + 1, (size + 1) - (index + 1));
+
+                // Print in tabular format and free dynamic memory
+                printf("%-40s%s", record, value);
                 free(record);
                 free(value);
             }
         }
         else{
             perror("Could not open file in io");
-            exit(0);
+            B_exit(args, size);
         }
-
-        /* Clean-up */
-        free(start);
-        free(end);
     }
 }
 
@@ -752,7 +758,6 @@ void io(char **args, int size){
 
 char *strrev(char *str){
     int i = strlen(str) - 1, j = 0;
-
     char ch;
     while (i > j){
         ch = str[i];
