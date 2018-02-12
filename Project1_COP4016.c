@@ -267,7 +267,7 @@ void ParseIt(char* input){
     char * temp = (char *)calloc(15, sizeof(char *));
     int another_counter = 0;
     for(int i = 0; i < size ;i++){
-        if(cmdline[i+1] == NULL || cmdline[i+1] == ' '){
+        if(cmdline[i+1] == NULL || strcmp(cmdline[i+1], " ") == 0){
             printf("%s", cmdline[i]);
             strncpy(temp, cmdline[i], (strlen(cmdline[i]) - 1));
             cmdline[i] = temp;
@@ -276,7 +276,7 @@ void ParseIt(char* input){
 
     // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
-
+//envvar(cmdarray);
     /* Execution process commands */
     if(strcmp(cmdline[0], "exit") == 0)
         B_exit(cmdline, size);
@@ -322,8 +322,8 @@ char* envvar(char *cmdarray){
         value[i] = env_var[i]; //have to get rid of null character because its a c string
     }
     // printf("%s\n", value);
-    env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
-    printf("%s\n",env_value);
+    env_value = getenv(value);
+     //Env value is saved in env_value if needed when you use it or you need to echo it
     return env_value;
 }
 
@@ -417,40 +417,60 @@ void Path_Res(char **cmdline, int size){
         int load_index = 0;
         char* Path_init = (char *)calloc(strlen(getenv("PATH")), sizeof(char *));
         Path_init = getenv("PATH");
-        printf("%s\n", Path_init);
+    //   printf("%s\n", Path_init);
         for(int i = 0; i < strlen(Path_init); i++){
-            if(Path_init[i] ==':'){
+            if(Path_init[i] == ':'){
                 semi_counter++;
             }
         }
         int index[semi_counter];
-        for(int i = 0; i < strlen(Path_init); i++){
+       index[0] = -1;
+        for(int i = 1; i < strlen(Path_init); i++){
             if(Path_init[i] ==':'){
                 index[load_index]  = i;
                 load_index++;
             }
         }
-        index[semi_counter + 1] = strlen(Path_init);
+        index[semi_counter] = (strlen(Path_init) - 1);
+        for(int i = 0; i < semi_counter + 1;i++){
+
+          //printf("%d\n", index[i]);
+        }
         char ** Path_paths = (char **)calloc(semi_counter, sizeof(char **));
         for(int a = 0; a < semi_counter;a++){
             Path_paths[a] = (char *)calloc(50, sizeof(char *));
             if(a == 0){
                 strncpy(Path_paths[a], Path_init, index[a]);
             }
-            else{
-                strncpy(Path_paths[a], Path_init + index[a-1] + 1, index[a]);
-            }
+          else if (a < semi_counter){
+                strncpy(Path_paths[a], Path_init + index[a] + 1, index[a + 1] - index[a] - 1);
+           }
         }
-        for(int a = 0; a < semi_counter; a++){
-            printf("%s\n", Path_paths[a]);
-        }
+        char* command = (char *)calloc(10, sizeof(char *));
         for(int i = 0; i < size;i++){
             char* noback  = strchr(cmdline[i], '/');
             char* noarrowone = strchr(cmdline[i], '<');
             char* noarrowtwo = strchr(cmdline[i], '>');
             char* nopipe = strchr(cmdline[i], '|');
             if (noback == NULL){
+              command = cmdline[i];
             }
+        }
+        for(int a = 0; a < semi_counter; a++){
+          strcat(Path_paths[a], "/");
+          strcat(Path_paths[a], command);
+          printf("%s\n",Path_paths[a]);
+        }
+        int all_failed = 0;
+        for(int a = 0; a < semi_counter; a++){
+        FILE* did_open = fopen(Path_paths[a], "r");
+        if(did_open != NULL){
+          fclose(did_open);
+          all_failed++;
+          }
+        }
+        if(all_failed == 0){
+          printf("No Match in Path was found, start execution\n");
         }
     }
 }
@@ -709,7 +729,8 @@ void cd(char **args, int size){
         printf("content: %s\n", args[i]);
 	  if(size < 2){ // If no args, $HOME is the arg
         //args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
-        if(chdir(envvar("$HOME")) != 0){
+        char* Home = "$HOME";
+        if(chdir(envvar(Home)) != 0){
             perror("Error changing directory to $HOME");
             B_exit(args, size);
         }
