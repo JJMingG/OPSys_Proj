@@ -278,7 +278,7 @@ void ParseIt(char* input){
 
     // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
-    //envvar(cmdarray);
+    envvar(cmdarray);
 
     /* Execution process commands */
     if(hasPipe > 0){
@@ -318,7 +318,7 @@ char* envvar(char *cmdarray){
         }
     }
     //printf("%s", env_var);
-    char value[150] = {' '};printf("Path res started");
+    char value[150] = {' '};
     char *env_value;
     for(int i = 0;i < strlen(env_var) - 1; i++) {
         value[i] = env_var[i]; //have to get rid of null character because its a c string
