@@ -276,7 +276,6 @@ void ParseIt(char* input){
 
     // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
-//envvar(cmdarray);
     /* Execution process commands */
     if(strcmp(cmdline[0], "exit") == 0)
         B_exit(cmdline, size);
@@ -461,7 +460,7 @@ void Path_Res(char **cmdline, int size){
         for(int a = 0; a < semi_counter; a++){
           strcat(Path_paths[a], "/");
           strcat(Path_paths[a], command);
-          printf("%s\n",Path_paths[a]);
+          //printf("%s\n",Path_paths[a]);
         }
         int all_failed = 0;
         for(int a = 0; a < semi_counter; a++){
