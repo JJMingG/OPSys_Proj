@@ -44,7 +44,7 @@ int main(){
     char *name;
     char input[226]; // array for user input
     char cwd[200]; // array for hold current directory
-    name=(char *)malloc(10*sizeof(char));
+    name= (char *)calloc(15, sizeof(char *));
     struct utsname uData;
     cuserid(name); // get current user
     uname(&uData); //get current machine name
@@ -274,10 +274,10 @@ void ParseIt(char* input){
         }
     }
 
-    // Call path resolution and env_var function to predefine arguments
+    // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
     envvar(cmdline, size);
-
+  
     /* Execution process commands */
     if(strcmp(cmdline[0], "exit") == 0)
         B_exit(cmdline, size);
@@ -289,16 +289,17 @@ void ParseIt(char* input){
   	    redirection(cmdline, size);
   	    hasRedir = 0;
     }
-    else if(strcmp(cmdline[0], "/usr/bin/echo") == 0 || strcmp(cmdline[0], "echo") == 0)
+    else if(strcmp(cmdline[0], "echo") == 0)
         echo(cmdline, size);
     else if(strcmp(cmdline[0], "etime") == 0)
         etime(cmdline, size);
     else if(strcmp(cmdline[0], "io") == 0)
         io(cmdline, size);
-    else if(strcmp(cmdline[0], "/user/bin/cd") == 0 || strcmp(cmdline[0], "cd") == 0)
+    else if(strcmp(cmdline[0], "cd") == 0)
         cd(cmdline, size);
-    else
+    else{
   	    execution(cmdline, size);
+      }
 }
 
 void envvar(char **cmdline, int size){
@@ -311,6 +312,12 @@ void envvar(char **cmdline, int size){
             cmdline[i]  = temp;
         }
     }
+    printf("%s\n", temp);
+  temp  = getenv(temp);
+
+  cmdline[important_index]  = temp;
+  printf("%s\n", cmdline[important_index]);
+  }
 }
 
 void Path_Res(char **cmdline, int size){
@@ -326,7 +333,7 @@ void Path_Res(char **cmdline, int size){
     char *checkit_tilda = (char *)calloc(15, sizeof(char *));
     for(int i = 0; i < size;i++){
         for(int a = 0; a < strlen(cmdline[i]); a++){
-            if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.'){
+            if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.' ){
                 for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
                     if(cmdline[i][b] == '.'){
                     }
@@ -337,13 +344,13 @@ void Path_Res(char **cmdline, int size){
                 }
                 Pwd_holder_double_dot = getenv("PWD");
                 strrev(Pwd_holder_double_dot);
-                int back_slash = 0;
+                int boi = 0;
                 int checkit_counter = 0;
                 for(int b = 0;b < strlen(Pwd_holder_double_dot); b++){
                     if(Pwd_holder_double_dot[b] == '/'){
-                        back_slash++;
+                        boi++;
                     }
-                    if(back_slash > 0){
+                    if(boi > 0){
                         checkit[checkit_counter] = Pwd_holder_double_dot[b + 1];
                         checkit_counter++;
                     }
@@ -398,6 +405,7 @@ void Path_Res(char **cmdline, int size){
                 printf("%s\n", cmdline[i]);
             }
         }
+
     }
     int semi_counter = 0;
     int load_index = 0;
@@ -677,7 +685,7 @@ void execution(char **cmdline, int size){
             etime(cmdline, size);
         else if(strcmp(cmdline[0], "io") == 0)
             io(cmdline, size);
-        else if(strcmp(cmdline[0], "/usr/bin/cd") == 0 || strcmp(cmdline[0], "cd") == 0)
+        else if(strcmp(cmdline[0], "cd") == 0)
             cd(cmdline, size);
         else{ // Execute external commands
             execv(cmdline[0], cmdline);
@@ -707,29 +715,24 @@ void cd(char **args, int size){
         printf("content: %s\n", args[i]);
 	  if(size < 2){ // If no args, $HOME is the arg
         //args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
-        char* Home = getenv("HOME");
-        if(chdir(Home) != 0){
+        char* Home = "$HOME";
+        //if(chdir(envvar(Home)) != 0){
             perror("Error changing directory to $HOME");
-            // Signals error if target is not a directory
             B_exit(args, size);
-        }
-        else{
-            if(setenv("PWD", Home, 1) != 0){
-                perror("Unable to set $PWD");
-            }
-	      }
+        //}
+        //if(setenv("PWD", envvar("$HOME"), 1) != 0){
+            perror("Unable to set $PWD");
+	    //  }
     }
-    // Env_var and Path resolution is predetermined already
+	  // Signals error if target is not a directory
+    // Path resolution is predetermined already
     else{
         if(chdir(args[1]) != 0){
 	          perror("Error");
-            // Signals error if target is not a directory
             B_exit(args, size);
         }
-        else{
-            if(setenv("PWD", args[1], 1) != 0){
-                perror("Unable to set $PWD");
-            }
+        if(setenv("PWD", args[1], 1) != 0){
+            perror("Unable to set $PWD");
         }
     }
 
