@@ -276,7 +276,8 @@ void ParseIt(char* input){
 
     // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
-  //  envvar(cmdline, size);
+    envvar(cmdline, size);
+  
     /* Execution process commands */
     if(strcmp(cmdline[0], "exit") == 0)
         B_exit(cmdline, size);
@@ -302,15 +303,14 @@ void ParseIt(char* input){
 }
 
 void envvar(char **cmdline, int size){
-  int important_index = 0;
-  char * temp = (char *)calloc(15, sizeof(char *));
-for(int i = 0;i < size;i++){
-  for(int c = 0;c < strlen(cmdline[i]);c++){
-    if(cmdline[i][c] == '$')
-      {
-  //    strncpy(temp,cmdline[i] + 1, strlen(cmdline[i]));
-    important_index = i;
-      }
+    printf("IN ENV_VAR - need to completely test\n");
+    for(int i = 0;i < size;i++){
+        if(cmdline[i][0] == '$'){
+            char * temp = (char *)calloc(strlen(cmdline[i]), sizeof(char));
+            strncpy(temp, cmdline[i] + 1, strlen(cmdline[i]));
+            temp = getenv(temp);
+            cmdline[i]  = temp;
+        }
     }
     printf("%s\n", temp);
   temp  = getenv(temp);
@@ -411,14 +411,13 @@ void Path_Res(char **cmdline, int size){
     int load_index = 0;
     char* Path_init = (char *)calloc(strlen(getenv("PATH")), sizeof(char *));
     Path_init = getenv("PATH");
-//   printf("%s\n", Path_init);
     for(int i = 0; i < strlen(Path_init); i++){
         if(Path_init[i] == ':'){
             semi_counter++;
         }
     }
     int index[semi_counter];
-   index[0] = -1;
+    index[0] = -1;
     for(int i = 1; i < strlen(Path_init); i++){
         if(Path_init[i] ==':'){
             index[load_index]  = i;
@@ -426,10 +425,6 @@ void Path_Res(char **cmdline, int size){
         }
     }
     index[semi_counter] = (strlen(Path_init) - 1);
-    for(int i = 0; i < semi_counter + 1;i++){
-
-      //printf("%d\n", index[i]);
-    }
     char ** Path_paths = (char **)calloc(semi_counter, sizeof(char **));
     for(int a = 0; a < semi_counter;a++){
         Path_paths[a] = (char *)calloc(50, sizeof(char *));
@@ -453,26 +448,22 @@ void Path_Res(char **cmdline, int size){
         }
     }
     for(int a = 0; a < semi_counter; a++){
-      strcat(Path_paths[a], "/");
-      strcat(Path_paths[a], command);
-      //printf("%s\n",Path_paths[a]);
+        strcat(Path_paths[a], "/");
+        strcat(Path_paths[a], command);
     }
     int all_failed = 0;
     for(int a = 0; a < semi_counter; a++){
-    FILE* did_open = fopen(Path_paths[a], "r");
-    if(did_open != NULL){
-      fclose(did_open);
-      strcpy(cmdline[cmd_index], Path_paths[a]);
-      all_failed++;
-      }
-    }
-    if(all_failed == 0){
-      printf("No Match in Path was found, start execution\n");
+        FILE* did_open = fopen(Path_paths[a], "r");
+        if(did_open != NULL){
+            fclose(did_open);
+            strcpy(cmdline[cmd_index], Path_paths[a]);
+            all_failed++;
+        }
     }
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
-    printf("In pipe function - completely tested with echo but not execution\n");
+    printf("In pipe function - functional and tested\n");
 	  /* parse based on pipelines */
 	  int index[numpipes + 2]; // +2 to compensate the begining and end which shouldn't have pipes.
 	  int indexcounter = 1;
@@ -687,8 +678,8 @@ void execution(char **cmdline, int size){
          * redirection, and built-ins.
          */
         if(strcmp(cmdline[0], "exit") == 0)
-            B_exit(cmdline, size);
-        else if(strcmp(cmdline[0], "echo") == 0)
+            exit(0);
+        else if(strcmp(cmdline[0], "/usr/bin/echo") == 0 || strcmp(cmdline[0], "echo") == 0)
             echo(cmdline, size);
         else if(strcmp(cmdline[0], "etime") == 0)
             etime(cmdline, size);
@@ -719,9 +710,8 @@ int B_exit(char **args, int size){
 }
 
 void cd(char **args, int size){
-    printf("IN CD FUNCTION - Need to test completely\n");
-    printf("size is %d\n", size);
-    for(int i = 0; i < size; i++)
+    printf("IN CD FUNCTION - Tested, test when path resolution fixed\n");
+    for(int i = 0; i < size; i++) // dont forget to delete this
         printf("content: %s\n", args[i]);
 	  if(size < 2){ // If no args, $HOME is the arg
         //args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
@@ -749,28 +739,21 @@ void cd(char **args, int size){
 }
 
 void echo(char **args, int size){
-    printf("In ECHO - Need to test with path resolution and envvar\n");
+    printf("In ECHO - Fully tested and fully functional\n");
     //outputs whatever user specifies
 	  //for each argument:
 		    //look up the argument in the list of environment variables
 		    //print the value if it exists
 		    //signal an error if it does not exist
     for(int i = 1; i < size; i++){
-        if (args[i][0] == '$'){
-            // environmental variable
-            //printf("HERE is %s\n", envvar(args[i]));
-          //  printf("%s ", envvar(args[i]));
-            // envvar will print out error message if it does not exist
-            i++; // arg is in next index after the $ so increment to skip
-        }
-        else{
-            printf("%s ", args[i]);
-        }
+        printf("%s ", args[i]);
+        // env_var and path resolutions are predetermined
     }
     printf("\n");
 }
 
 void etime(char **args, int size){
+    /* This function checks the amount of time it takes for a specified command to execute */
     printf("IN ETIME FUNCTION - Fully tested and fully functional\n");
     long sec, usec;
 	  struct timeval start, end;
@@ -854,7 +837,7 @@ void io(char **args, int size){
     }
     else if(pid < 0){ // Fork error
         perror("io fork error");
-        B_exit(args, size);
+        exit(0);
     }
     else{ // Parent process
         waitpid(pid, NULL, 0);
