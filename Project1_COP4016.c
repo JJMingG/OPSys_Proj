@@ -274,9 +274,13 @@ void ParseIt(char* input){
         }
     }
 
-    // Call path resolution function to predefine paths before executing
+    // Call path resolution and env_var function to predefine arguments
     Path_Res(cmdline, size);
     envvar(cmdline, size);
+    printf("Testing cmdline[z]\n");
+    for(int z = 0; z < size; z++)
+        printf("cmdline[z]: %s\n", cmdline[z]);
+
     /* Execution process commands */
     if(strcmp(cmdline[0], "exit") == 0)
         B_exit(cmdline, size);
@@ -288,35 +292,35 @@ void ParseIt(char* input){
   	    redirection(cmdline, size);
   	    hasRedir = 0;
     }
-    else if(strcmp(cmdline[0], "echo") == 0)
+    else if(strcmp(cmdline[0], "/usr/bin/echo") == 0 || strcmp(cmdline[0], "echo") == 0)
         echo(cmdline, size);
     else if(strcmp(cmdline[0], "etime") == 0)
         etime(cmdline, size);
     else if(strcmp(cmdline[0], "io") == 0)
         io(cmdline, size);
-    else if(strcmp(cmdline[0], "cd") == 0)
+    else if(strcmp(cmdline[0], "/user/bin/cd") == 0 || strcmp(cmdline[0], "cd") == 0)
         cd(cmdline, size);
     else
   	    execution(cmdline, size);
 }
 
 void envvar(char **cmdline, int size){
-  int important_index = 0;
-  char * temp = (char *)calloc(15, sizeof(char *));
-for(int i = 0;i < size;i++){
-  for(int c = 0;c < strlen(cmdline[i]);c++){
-    if(cmdline[i][c] == '$')
-      {
-      strncpy(temp,cmdline[i] + 1, strlen(cmdline[i]));
-    important_index = i;
-      }
+    printf("IN ENV_VAR - need to completely test\n");
+    for(int i = 0;i < size;i++){
+        if(cmdline[i][0] == '$'){
+            char * temp = (char *)calloc(strlen(cmdline[i]), sizeof(char));
+            strncpy(temp, cmdline[i] + 1, strlen(cmdline[i]));
+            printf("%s\n", temp);
+            temp = getenv(temp);
+            printf("HERE\n");
+            cmdline[i]  = temp;
+            printf("HERE2\n");
+            //free(temp);
+            printf("HERE3\n");
+            printf("%s\n", cmdline[i]);
+            printf("HERE4\n");
+        }
     }
-    printf("%s\n", temp);
-  temp  = getenv(temp);
-
-  cmdline[important_index]  = temp;
-  printf("%s\n", cmdline[important_index]);
-  }
 }
 
 void Path_Res(char **cmdline, int size){
@@ -332,7 +336,7 @@ void Path_Res(char **cmdline, int size){
     char *checkit_tilda = (char *)calloc(15, sizeof(char *));
     for(int i = 0; i < size;i++){
         for(int a = 0; a < strlen(cmdline[i]); a++){
-            if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.' && done == 0){
+            if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.'){
                 for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
                     if(cmdline[i][b] == '.'){
                     }
@@ -343,13 +347,13 @@ void Path_Res(char **cmdline, int size){
                 }
                 Pwd_holder_double_dot = getenv("PWD");
                 strrev(Pwd_holder_double_dot);
-                int boi = 0;
+                int back_slash = 0;
                 int checkit_counter = 0;
                 for(int b = 0;b < strlen(Pwd_holder_double_dot); b++){
                     if(Pwd_holder_double_dot[b] == '/'){
-                        boi++;
+                        back_slash++;
                     }
-                    if(boi > 0){
+                    if(back_slash > 0){
                         checkit[checkit_counter] = Pwd_holder_double_dot[b + 1];
                         checkit_counter++;
                     }
@@ -404,69 +408,68 @@ void Path_Res(char **cmdline, int size){
                 printf("%s\n", cmdline[i]);
             }
         }
+    }
+    int semi_counter = 0;
+    int load_index = 0;
+    char* Path_init = (char *)calloc(strlen(getenv("PATH")), sizeof(char *));
+    Path_init = getenv("PATH");
+//   printf("%s\n", Path_init);
+    for(int i = 0; i < strlen(Path_init); i++){
+        if(Path_init[i] == ':'){
+            semi_counter++;
+        }
+    }
+    int index[semi_counter];
+   index[0] = -1;
+    for(int i = 1; i < strlen(Path_init); i++){
+        if(Path_init[i] ==':'){
+            index[load_index]  = i;
+            load_index++;
+        }
+    }
+    index[semi_counter] = (strlen(Path_init) - 1);
+    for(int i = 0; i < semi_counter + 1;i++){
 
-        int semi_counter = 0;
-        int load_index = 0;
-        char* Path_init = (char *)calloc(strlen(getenv("PATH")), sizeof(char *));
-        Path_init = getenv("PATH");
-    //   printf("%s\n", Path_init);
-        for(int i = 0; i < strlen(Path_init); i++){
-            if(Path_init[i] == ':'){
-                semi_counter++;
-            }
+      //printf("%d\n", index[i]);
+    }
+    char ** Path_paths = (char **)calloc(semi_counter, sizeof(char **));
+    for(int a = 0; a < semi_counter;a++){
+        Path_paths[a] = (char *)calloc(50, sizeof(char *));
+        if(a == 0){
+            strncpy(Path_paths[a], Path_init, index[a]);
         }
-        int index[semi_counter];
-       index[0] = -1;
-        for(int i = 1; i < strlen(Path_init); i++){
-            if(Path_init[i] ==':'){
-                index[load_index]  = i;
-                load_index++;
-            }
+      else if (a < semi_counter){
+            strncpy(Path_paths[a], Path_init + index[a] + 1, index[a + 1] - index[a] - 1);
+       }
+    }
+    int cmd_index = 0;
+    char* command = (char *)calloc(10, sizeof(char *));
+    for(int i = 0; i < size;i++){
+        char* noback  = strchr(cmdline[i], '/');
+        char* noarrowone = strchr(cmdline[i], '<');
+        char* noarrowtwo = strchr(cmdline[i], '>');
+        char* nopipe = strchr(cmdline[i], '|');
+        if (noback == NULL){
+          command = cmdline[i];
+        cmd_index  = i;
         }
-        index[semi_counter] = (strlen(Path_init) - 1);
-        for(int i = 0; i < semi_counter + 1;i++){
-
-          //printf("%d\n", index[i]);
-        }
-        char ** Path_paths = (char **)calloc(semi_counter, sizeof(char **));
-        for(int a = 0; a < semi_counter;a++){
-            Path_paths[a] = (char *)calloc(50, sizeof(char *));
-            if(a == 0){
-                strncpy(Path_paths[a], Path_init, index[a]);
-            }
-          else if (a < semi_counter){
-                strncpy(Path_paths[a], Path_init + index[a] + 1, index[a + 1] - index[a] - 1);
-           }
-        }
-        int cmd_index = 0;
-        char* command = (char *)calloc(10, sizeof(char *));
-        for(int i = 0; i < size;i++){
-            char* noback  = strchr(cmdline[i], '/');
-            char* noarrowone = strchr(cmdline[i], '<');
-            char* noarrowtwo = strchr(cmdline[i], '>');
-            char* nopipe = strchr(cmdline[i], '|');
-            if (noback == NULL){
-              command = cmdline[i];
-            cmd_index  = i;
-            }
-        }
-        for(int a = 0; a < semi_counter; a++){
-          strcat(Path_paths[a], "/");
-          strcat(Path_paths[a], command);
-          //printf("%s\n",Path_paths[a]);
-        }
-        int all_failed = 0;
-        for(int a = 0; a < semi_counter; a++){
-        FILE* did_open = fopen(Path_paths[a], "r");
-        if(did_open != NULL){
-          fclose(did_open);
-          strcpy(cmdline[cmd_index], Path_paths[a]);
-          all_failed++;
-          }
-        }
-        if(all_failed == 0){
-          printf("No Match in Path was found, start execution\n");
-        }
+    }
+    for(int a = 0; a < semi_counter; a++){
+      strcat(Path_paths[a], "/");
+      strcat(Path_paths[a], command);
+      //printf("%s\n",Path_paths[a]);
+    }
+    int all_failed = 0;
+    for(int a = 0; a < semi_counter; a++){
+    FILE* did_open = fopen(Path_paths[a], "r");
+    if(did_open != NULL){
+      fclose(did_open);
+      strcpy(cmdline[cmd_index], Path_paths[a]);
+      all_failed++;
+      }
+    }
+    if(all_failed == 0){
+      printf("No Match in Path was found, start execution\n");
     }
 }
 
@@ -687,13 +690,13 @@ void execution(char **cmdline, int size){
          */
         if(strcmp(cmdline[0], "exit") == 0)
             B_exit(cmdline, size);
-        else if(strcmp(cmdline[0], "echo") == 0)
+        else if(strcmp(cmdline[0], "/usr/bin/echo") == 0 || strcmp(cmdline[0], "echo") == 0)
             echo(cmdline, size);
         else if(strcmp(cmdline[0], "etime") == 0)
             etime(cmdline, size);
         else if(strcmp(cmdline[0], "io") == 0)
             io(cmdline, size);
-        else if(strcmp(cmdline[0], "cd") == 0)
+        else if(strcmp(cmdline[0], "/usr/bin/cd") == 0 || strcmp(cmdline[0], "cd") == 0)
             cd(cmdline, size);
         else{ // Execute external commands
             execv(cmdline[0], cmdline);
@@ -724,24 +727,29 @@ void cd(char **args, int size){
         printf("content: %s\n", args[i]);
 	  if(size < 2){ // If no args, $HOME is the arg
         //args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
-        char* Home = "$HOME";
-        //if(chdir(envvar(Home)) != 0){
+        char* Home = getenv("HOME");
+        if(chdir(Home) != 0){
             perror("Error changing directory to $HOME");
+            // Signals error if target is not a directory
             B_exit(args, size);
-        //}
-        //if(setenv("PWD", envvar("$HOME"), 1) != 0){
-            perror("Unable to set $PWD");
-	    //  }
+        }
+        else{
+            if(setenv("PWD", Home, 1) != 0){
+                perror("Unable to set $PWD");
+            }
+	      }
     }
-	  // Signals error if target is not a directory
-    // Path resolution is predetermined already
+    // Env_var and Path resolution is predetermined already
     else{
         if(chdir(args[1]) != 0){
 	          perror("Error");
+            // Signals error if target is not a directory
             B_exit(args, size);
         }
-        if(setenv("PWD", args[1], 1) != 0){
-            perror("Unable to set $PWD");
+        else{
+            if(setenv("PWD", args[1], 1) != 0){
+                perror("Unable to set $PWD");
+            }
         }
     }
 
@@ -755,7 +763,9 @@ void echo(char **args, int size){
 		    //print the value if it exists
 		    //signal an error if it does not exist
     for(int i = 1; i < size; i++){
-        if (args[i][0] == '$'){
+        printf("%s ", args[i]);
+        // env_var and path resolutions are predetermined
+        /*if (args[i][0] == '$'){
             // environmental variable
             //printf("HERE is %s\n", envvar(args[i]));
           //  printf("%s ", envvar(args[i]));
@@ -764,7 +774,7 @@ void echo(char **args, int size){
         }
         else{
             printf("%s ", args[i]);
-        }
+        }*/
     }
     printf("\n");
 }
