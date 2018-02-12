@@ -278,7 +278,7 @@ void ParseIt(char* input){
 
     // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
-    envvar(cmdarray);
+    //envvar(cmdarray);
 
     /* Execution process commands */
     if(hasPipe > 0){
@@ -413,7 +413,51 @@ void Path_Res(char **cmdline, int size){
               printf("%s\n", cmdline[i]);
             }
         }
+
+        int semi_counter = 0;
+        int load_index = 0;
+        char* Path_init = (char *)calloc(strlen(getenv("PATH")), sizeof(char *));
+        Path_init = getenv("PATH");
+        printf("%s\n", Path_init);
+        for(int i = 0; i < strlen(Path_init); i++){
+          if(Path_init[i] ==':'){
+            semi_counter++;
+          }
+        }
+        int index[semi_counter];
+        for(int i = 0; i < strlen(Path_init); i++){
+          if(Path_init[i] ==':'){
+          index[load_index]  = i;
+          load_index++;
+          }
+        }
+       index[semi_counter + 1] = strlen(Path_init);
+        char ** Path_paths = (char **)calloc(semi_counter, sizeof(char **));
+        for(int a = 0; a < semi_counter;a++){
+          Path_paths[a] = (char *)calloc(50, sizeof(char *));
+          if(a == 0){
+        strncpy(Path_paths[a], Path_init, index[a]);
+        }
+        else{
+         strncpy(Path_paths[a], Path_init + index[a-1] + 1, index[a]);
+          }
+        }
+        for(int a = 0; a < semi_counter; a++)
+        {
+
+          printf("%s\n", Path_paths[a]);
+        }
+        for(int i = 0; i < size;i++){
+      char* noback  = strchr(cmdline[i], '/');
+      char* noarrowone = strchr(cmdline[i], '<');
+      char* noarrowtwo = strchr(cmdline[i], '>');
+      char* nopipe = strchr(cmdline[i], '|');
+      if (noback == NULL){
+
+
+      }
     }
+  }
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
