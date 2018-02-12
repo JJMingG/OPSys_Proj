@@ -446,6 +446,7 @@ void Path_Res(char **cmdline, int size){
                 strncpy(Path_paths[a], Path_init + index[a] + 1, index[a + 1] - index[a] - 1);
            }
         }
+        int cmd_index = 0;
         char* command = (char *)calloc(10, sizeof(char *));
         for(int i = 0; i < size;i++){
             char* noback  = strchr(cmdline[i], '/');
@@ -454,6 +455,7 @@ void Path_Res(char **cmdline, int size){
             char* nopipe = strchr(cmdline[i], '|');
             if (noback == NULL){
               command = cmdline[i];
+            cmd_index  = i;
             }
         }
         for(int a = 0; a < semi_counter; a++){
@@ -466,6 +468,7 @@ void Path_Res(char **cmdline, int size){
         FILE* did_open = fopen(Path_paths[a], "r");
         if(did_open != NULL){
           fclose(did_open);
+          strcpy(cmdline[cmd_index], Path_paths[a]);
           all_failed++;
           }
         }
