@@ -2,16 +2,14 @@
  * - Need parsing to parse out spaces correct and not have empty values in 2d array
  *        - cmd (cmd + space) creates two pointers instead of only one
  * - Path resolution function
- * - Execution function
- *        - Add built in function calls even tho parsit does already (mostly for pipeline an redirection)
  * - Background Processes
  * - Test each function, particularly:
  *        - cd (setenv and when path resolution is done)
- *        - io FUNCTION
- *        - execution FUNCTION (pipe and redirection with execution)
  *        - envvar FUNCTION
  *        - Path resolutions
  *        - background processes
+ *        - execution with path resolutions
+ *        - spacing with functions
  * - Create Makefile
  * - Write up README file
  * - Clean up comments, printf, etc
@@ -34,6 +32,7 @@ void pipeexe(char **cmdline, int size, int numpipes);
 void redirection(char **cmdline, int size);
 void execution(char **cmdline, int size);
 char *strrev(char *str);
+void background(char **cmdline, int size);
 
 // Built-ins
 int B_exit(char **args, int size);
@@ -41,6 +40,55 @@ void cd(char **args, int size);
 void echo(char **args, int size);
 void etime(char **args, int size);
 void io(char **args, int size);
+
+struct Node {
+	char *cmd;
+	pid_t pid;
+	int position;
+	struct Node *next;
+	struct Node *prev;
+};//end of node
+
+
+/* Given a reference (pointer to pointer) to the head of a list
+   and an int, inserts a new node on the front of the list. */
+void push(struct Node** head_ref, char * line, int a, int pos)
+{
+    /* 1. allocate node */
+    struct Node* new_node = (struct Node*) malloc(sizeof(struct Node));
+    /* 2. put in the data  */
+    new_node->cmd  = line;
+		new_node->pid  = a;
+    new_node->position= pos;
+    /* 3. Make next of new node as head and previous as NULL */
+    new_node->next = (*head_ref);
+    new_node->prev = NULL;
+    /* 4. change prev of head node to new node */
+    if((*head_ref) !=  NULL)
+      (*head_ref)->prev = new_node ;
+    /* 5. move the head to point to the new node */
+    (*head_ref)= new_node;
+}
+
+void deleteNode(struct Node **head_ref, struct Node *del)
+{
+  /* base case */
+  if(*head_ref == NULL || del == NULL)
+    return;
+  /* If node to be deleted is head node */
+  if(*head_ref == del)
+    *head_ref = del->next;
+  /* Change next only if node to be deleted is NOT the last node */
+  if(del->next != NULL)
+    del->next->prev = del->prev;
+  /* Change prev only if node to be deleted is NOT the first node */
+  if(del->prev != NULL)
+    del->prev->next = del->next;
+  /* Finally, free the memory occupied by del*/
+  free(del);
+  return;
+}
+// deleteNode(&head, head->next);  --------->delete last node
 
 int main(){
     char *name;
@@ -269,7 +317,7 @@ void ParseIt(char* input){
     char * temp = (char *)calloc(15, sizeof(char *));
     int another_counter = 0;
     for(int i = 0; i < size ;i++){
-        if(cmdline[i+1] == NULL || cmdline[i+1] == ' '){
+        if(cmdline[i+1] == NULL || strcmp(cmdline[i+1], " ") == 0){
             printf("%s", cmdline[i]);
             strncpy(temp, cmdline[i], (strlen(cmdline[i]) - 1));
             cmdline[i] = temp;
@@ -278,10 +326,11 @@ void ParseIt(char* input){
 
     // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
-    envvar(cmdarray);
-
+//envvar(cmdarray);
     /* Execution process commands */
-    if(hasPipe > 0){
+    if(strcmp(cmdline[0], "exit") == 0)
+        B_exit(cmdline, size);
+    else if(hasPipe > 0){
   	    pipeexe(cmdline, size, hasPipe);
   	    hasPipe = 0;
     }
@@ -289,8 +338,6 @@ void ParseIt(char* input){
   	    redirection(cmdline, size);
   	    hasRedir = 0;
     }
-    else if(strcmp(cmdline[0], "exit") == 0)
-        B_exit(cmdline, size);
     else if(strcmp(cmdline[0], "echo") == 0)
         echo(cmdline, size);
     else if(strcmp(cmdline[0], "etime") == 0)
@@ -304,6 +351,7 @@ void ParseIt(char* input){
 }
 
 char* envvar(char *cmdarray){
+    printf("IN ENVVAR - need to test completely\n");
     char env_var[200];
     int a = 0;
     for (int i = 0; i < strlen(cmdarray); i++){
@@ -324,12 +372,13 @@ char* envvar(char *cmdarray){
         value[i] = env_var[i]; //have to get rid of null character because its a c string
     }
     // printf("%s\n", value);
-    env_value = getenv(value); //Env value is saved in env_value if needed when you use it or you need to echo it
-    printf("%s\n",env_value);
+    env_value = getenv(value);
+     //Env value is saved in env_value if needed when you use it or you need to echo it
     return env_value;
 }
 
 void Path_Res(char **cmdline, int size){
+    printf("In path resolution - Not finished and need to test\n");
     int done = 0;
     int cmdline_counter_double_dot = 0;
     int cmdline_counter_single_dot = 0;
@@ -370,54 +419,117 @@ void Path_Res(char **cmdline, int size){
                 printf("%s\n", cmdline[i]);
             }
             if(cmdline[i][a] == '.'){
-              for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
-                  if(cmdline[i][b] == '.'){
-                  }
-                  else {
-                      cmdline[i][cmdline_counter_single_dot] = cmdline[i][b];
-                      cmdline_counter_single_dot++;
-                  }
-              }
-            Pwd_holder_single_dot = getenv("PWD");
-            strcat(Pwd_holder_single_dot, cmdline[i]);
-            free(cmdline[i]);
-            cmdline[i] = Pwd_holder_single_dot;
-            printf("%s", cmdline[i]);
+                for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
+                    if(cmdline[i][b] == '.'){
+                    }
+                    else {
+                        cmdline[i][cmdline_counter_single_dot] = cmdline[i][b];
+                        cmdline_counter_single_dot++;
+                    }
+                }
+                Pwd_holder_single_dot = getenv("PWD");
+                strcat(Pwd_holder_single_dot, cmdline[i]);
+                free(cmdline[i]);
+                cmdline[i] = Pwd_holder_single_dot;
+                printf("%s", cmdline[i]);
             }
             if(cmdline[i][a] == '~'){
-              for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
-                  if(cmdline[i][b] == '~'){
-                  }
-                  else {
-                      cmdline[i][cmdline_tilda] = cmdline[i][b];
-                      cmdline_tilda++;
-                  }
-              }
-              Pwd_holder_tilda = getenv("HOME");
-              strrev(Pwd_holder_tilda);
-              int backslash_checker = 0;
-              int checkit_counter = 0;
-              for(int b = 0;b < strlen(Pwd_holder_tilda); b++){
-                  if(Pwd_holder_tilda[b] == '/'){
-                      backslash_checker++;
-                  }
-                  if(backslash_checker > 0){
-                      checkit_tilda[checkit_counter] = Pwd_holder_tilda[b + 1];
-                      checkit_counter++;
-                  }
-              }
-              strrev(checkit_tilda);
-              strcat(checkit_tilda, cmdline[i]);
-              free(cmdline[i]);
-              cmdline[i] = checkit_tilda;
-              printf("%s\n", cmdline[i]);
+                for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
+                    if(cmdline[i][b] == '~'){
+                    }
+                    else {
+                        cmdline[i][cmdline_tilda] = cmdline[i][b];
+                        cmdline_tilda++;
+                    }
+                }
+                Pwd_holder_tilda = getenv("HOME");
+                strrev(Pwd_holder_tilda);
+                int backslash_checker = 0;
+                int checkit_counter = 0;
+                for(int b = 0;b < strlen(Pwd_holder_tilda); b++){
+                    if(Pwd_holder_tilda[b] == '/'){
+                        backslash_checker++;
+                    }
+                    if(backslash_checker > 0){
+                        checkit_tilda[checkit_counter] = Pwd_holder_tilda[b + 1];
+                        checkit_counter++;
+                    }
+                }
+                strrev(checkit_tilda);
+                strcat(checkit_tilda, cmdline[i]);
+                free(cmdline[i]);
+                cmdline[i] = checkit_tilda;
+                printf("%s\n", cmdline[i]);
             }
+        }
+
+        int semi_counter = 0;
+        int load_index = 0;
+        char* Path_init = (char *)calloc(strlen(getenv("PATH")), sizeof(char *));
+        Path_init = getenv("PATH");
+    //   printf("%s\n", Path_init);
+        for(int i = 0; i < strlen(Path_init); i++){
+            if(Path_init[i] == ':'){
+                semi_counter++;
+            }
+        }
+        int index[semi_counter];
+       index[0] = -1;
+        for(int i = 1; i < strlen(Path_init); i++){
+            if(Path_init[i] ==':'){
+                index[load_index]  = i;
+                load_index++;
+            }
+        }
+        index[semi_counter] = (strlen(Path_init) - 1);
+        for(int i = 0; i < semi_counter + 1;i++){
+
+          //printf("%d\n", index[i]);
+        }
+        char ** Path_paths = (char **)calloc(semi_counter, sizeof(char **));
+        for(int a = 0; a < semi_counter;a++){
+            Path_paths[a] = (char *)calloc(50, sizeof(char *));
+            if(a == 0){
+                strncpy(Path_paths[a], Path_init, index[a]);
+            }
+          else if (a < semi_counter){
+                strncpy(Path_paths[a], Path_init + index[a] + 1, index[a + 1] - index[a] - 1);
+           }
+        }
+        int cmd_index = 0;
+        char* command = (char *)calloc(10, sizeof(char *));
+        for(int i = 0; i < size;i++){
+            char* noback  = strchr(cmdline[i], '/');
+            char* noarrowone = strchr(cmdline[i], '<');
+            char* noarrowtwo = strchr(cmdline[i], '>');
+            char* nopipe = strchr(cmdline[i], '|');
+            if (noback == NULL){
+              command = cmdline[i];
+            cmd_index  = i;
+            }
+        }
+        for(int a = 0; a < semi_counter; a++){
+          strcat(Path_paths[a], "/");
+          strcat(Path_paths[a], command);
+          printf("%s\n",Path_paths[a]);
+        }
+        int all_failed = 0;
+        for(int a = 0; a < semi_counter; a++){
+        FILE* did_open = fopen(Path_paths[a], "r");
+        if(did_open != NULL){
+          fclose(did_open);
+          strcpy(cmdline[cmd_index], Path_paths[a]);
+          all_failed++;
+          }
+        }
+        if(all_failed == 0){
+          printf("No Match in Path was found, start execution\n");
         }
     }
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
-    printf("In pipe function\n");
+    printf("In pipe function - completely tested with echo but not execution\n");
 	  /* parse based on pipelines */
 	  int index[numpipes + 2]; // +2 to compensate the begining and end which shouldn't have pipes.
 	  int indexcounter = 1;
@@ -459,6 +571,17 @@ void pipeexe(char **cmdline, int size, int numpipes){
 	  int pid[numpipes + 1];
 
 	  for(int i = 0; i < numpipes + 1; i++){
+        // Parse into 2d arrays to pass to execution function
+        int nsize = index[i + 1] - index[i] - 1;
+        char ** temp = (char **)calloc(nsize , sizeof(char *));
+        int k = 0;
+        for(int j = index[i] + 1; j < index[i + 1]; j++){
+            temp[k] = (char *)calloc(strlen(cmdline[j]) + 1, sizeof(char));
+            temp[k] = cmdline[j];
+            k++;
+        }
+
+        // Piping
         if(i == 0){ // First Command
             pipe(fd1);
       		  if(pid[i] = fork() == 0){ // Child (cmd1 | cmd2)
@@ -468,8 +591,8 @@ void pipeexe(char **cmdline, int size, int numpipes){
                 close(fd1[1]);
 
                 // Execution
-                //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-                echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+                execution(temp, nsize);
+                //echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
                 exit(0);
             }
             else if(pid[i] < 0){
@@ -486,8 +609,8 @@ void pipeexe(char **cmdline, int size, int numpipes){
                 close(fd2[1]);
 
                 // Execution
-                //execution(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
-                echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
+                execution(temp, nsize);
+                //echo(cmdline + (1 + index[i]), index[i + 1] - index[i] - 1);
                 exit(0);
             }
             else if(pid[i] < 0){
@@ -520,6 +643,10 @@ void pipeexe(char **cmdline, int size, int numpipes){
                 exit(0);
             }
         }
+        /* Clean-up */
+        for(int z = 0; z < nsize; z++)
+            free(temp[z]);
+        free(temp);
     }
     for(int i = 0; i < numpipes + 1; i++){ // Parent
         waitpid(pid[i], NULL, 0);
@@ -528,7 +655,7 @@ void pipeexe(char **cmdline, int size, int numpipes){
 }
 
 void redirection(char **cmdline, int size){
-    printf("IN REDIRECTION FUNCTION\n");
+    printf("IN REDIRECTION FUNCTION - Completely tested with echo but not execution\n");
     /* Indexing of redirections */
     int index = 0; // Only need index for 1 redirection as stated by WenQi
     for(int i = 0; i < size; i++){
@@ -541,30 +668,29 @@ void redirection(char **cmdline, int size){
             index = i;
         }
     }
-    printf("AFTER INDEXING\n");
 
     /* Error Handling */
-    if(index == 0){
+    if(index == 0){ // checks if redirection symbol is at beginning of cmdline
         perror("Error: No command specified");
         exit(0);
     }
-    else if(index == size - 1){
+    else if(index == size - 1){ // checks if redirection symbol is at end of cmdline
         perror("Error: No file specified");
         exit(0);
-    }
-    printf("AFTER ERROR CHECKING\n");
+    } // file not checked because if file is not in the right place, it wont open
 
     /* Parse out redirection symbol and filename */
     char ** temp = (char **)calloc(size - 2, sizeof(char *));
-    for(int i = 0; i < index; i++){ // get the cmds and args before the redirection symbol
-        temp[i] = (char *)calloc(strlen(cmdline[i]) + 1, sizeof(char));
-        temp[i] = cmdline[i];
+    int j = 0;
+    for(j = 0; j < index; j++){ // get the cmds and args before the redirection symbol
+        temp[j] = (char *)calloc(strlen(cmdline[j]) + 1, sizeof(char));
+        temp[j] = cmdline[j];
     }
     for(int i = index + 2; i < size; i++){ // get the args after filename b/c they are considered args too
-        temp[i] = (char *)calloc(strlen(cmdline[i]) + 1, sizeof(char));
-        temp[i] = cmdline[i];
+        temp[j] = (char *)calloc(strlen(cmdline[i]) + 1, sizeof(char));
+        temp[j] = cmdline[i];
+        j++;
     }
-    printf("AFTER PARSING\n");
 
     /* Implementation */
     int fd, pid;
@@ -590,27 +716,85 @@ void redirection(char **cmdline, int size){
         }
 
         // Execution
-        //execution(2dtemp, size - 2);
-        echo(temp, size - 2);
+        execution(temp, size - 2);
+        exit(0);
     }
     else if(pid < 0){
         perror("Fork error in redirection function");
         exit(0);
     }
     else{ // parent process
-        close(fd);
+        close(fd); // Probably not necessary?
+        waitpid(pid, NULL, 0);
     }
-    printf("AFTER IMPLEMENTATION\n");
+
     /* Memory Clean-up */
-    for(int i = 0; i < size - 2; i++){
-        printf("I is %d", i);
+    for(int i = 0; i < size - 2; i++)
         free(temp[i]);
-    }
     free(temp);
 }
 
 void execution(char **cmdline, int size){
-    printf("IN EXECUTION FUNCTION\n");
+    printf("IN EXECUTION FUNCTION - Tested and functional, maybe test when path resolution works\n");
+    int pid;
+    int count=0;
+    struct Node* head = NULL; // used for background process
+    if(strcmp(cmdline[size], "&") == 0){
+        cmdline[size][sizeof(cmdline[size])]="";
+        push(&head,cmdline[0], pid, count);
+        count++;
+      }
+      //modify the while loop to pritn out "start execution"
+      while((pid = waitpid(-1, &count, WNOHANG)) > 0) {
+          printf("[%d]+  [%d]\n",
+                  WEXITSTATUS(count),pid);
+               }
+    if(pid = fork() == 0){ // Child process
+        /* - List of Execution Processes -
+         * Built-ins are checked again despite being checked for in the parsing
+         * function. This is mainly for other functions such as pipeexe,
+         * redirection, and built-ins.
+         */
+
+        if(strcmp(cmdline[0], "exit") == 0)
+            B_exit(cmdline, size);
+        else if(strcmp(cmdline[0], "echo") == 0)
+            echo(cmdline, size);
+        else if(strcmp(cmdline[0], "etime") == 0)
+            etime(cmdline, size);
+        else if(strcmp(cmdline[0], "io") == 0)
+            io(cmdline, size);
+        else if(strcmp(cmdline[0], "cd") == 0)
+            cd(cmdline, size);
+
+        else{ // Execute external commands
+            execv(cmdline[0], cmdline);
+            // Reaches here only if execution fails
+            printf("Problem executing %s\n", cmdline[0]);
+            exit(0);
+        }
+    }
+    else if(pid < 0){ // Error forking
+        perror("Forking error in execution function\n");
+        exit(0);
+    }
+    else{ // Parent process
+        waitpid(pid, NULL, 0);
+    }
+    while((pid = waitpid(-1, &count, WNOHANG)) > 0) {
+        /*printf("[%d]+  [%d]\n",
+                WEXITSTATUS(count),pid);
+          */
+        //call background process function instead and use it to pop LL }
+    // printf()
+}
+
+void background(char **cmdline, int size){
+/*  while((pid = waitpid(-1, &count, WNOHANG)) > 0) {
+      printf("[proc %d exited with code %d]\n",
+             pid, WEXITSTATUS(count)); //for this while loop, it uses the count int from above
+      /* here you can remove the pid from your jobs list */
+  }
 
 }
 
@@ -621,23 +805,24 @@ int B_exit(char **args, int size){
 }
 
 void cd(char **args, int size){
-    printf("IN CD FUNCTION\n");
+    printf("IN CD FUNCTION - Need to test completely\n");
     printf("size is %d\n", size);
-    args[1] = envvar(args[1]);
     for(int i = 0; i < size; i++)
         printf("content: %s\n", args[i]);
 	  if(size < 2){ // If no args, $HOME is the arg
         //args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
-        if(chdir(envvar("$HOME")) != 0){
+        char* Home = "$HOME";
+        if(chdir(envvar(Home)) != 0){
             perror("Error changing directory to $HOME");
             B_exit(args, size);
         }
         if(setenv("PWD", envvar("$HOME"), 1) != 0){
             perror("Unable to set $PWD");
 	      }
+    }
 	  // Signals error if target is not a directory
     // Path resolution is predetermined already
-    else{ // Currently doesnt work with .. possibly because of path resolution
+    else{
         if(chdir(args[1]) != 0){
 	          perror("Error");
             B_exit(args, size);
@@ -646,95 +831,119 @@ void cd(char **args, int size){
             perror("Unable to set $PWD");
         }
     }
-  }
+
 }
 
 void echo(char **args, int size){
+    printf("In ECHO - Need to test with path resolution and envvar\n");
     //outputs whatever user specifies
 	  //for each argument:
 		    //look up the argument in the list of environment variables
 		    //print the value if it exists
 		    //signal an error if it does not exist
     for(int i = 1; i < size; i++){
-        if (strcmp(args[i], "$") == 0){ // environmental variable
-            printf("%s ", envvar(args[i + 1])); // envvar will print out error message if it does not exist
-            i++; // arg is in next index after the $ so increemnt to skip
+        if (args[i][0] == '$'){
+            // environmental variable
+            //printf("HERE is %s\n", envvar(args[i]));
+            printf("%s ", envvar(args[i]));
+            // envvar will print out error message if it does not exist
+            i++; // arg is in next index after the $ so increment to skip
         }
-        else
+        else{
             printf("%s ", args[i]);
+        }
     }
     printf("\n");
 }
 
 void etime(char **args, int size){
-    printf("IN ETIME FUNCTION\n");
-    long sec, msec;
+    printf("IN ETIME FUNCTION - Fully tested and fully functional\n");
+    long sec, usec;
 	  struct timeval start, end;
-	  gettimeofday(&start, NULL);
+	  gettimeofday(&start, NULL); // get start time
 
 	  // take out "etime" and pass to execute function
-    //execution(args + 1, size - 1);
-    echo(args + 1, size - 1);
+    char ** temp = (char **)calloc(size - 1, sizeof(char* *));
+    for(int i = 1; i < size; i++){
+        temp[i - 1] = (char *)calloc(strlen(args[i]) + 1, sizeof(char));
+        temp[i - 1] = args[i];
+    }
+    execution(temp, size - 1);
+    //echo(args + 1, size - 1);
     // passes in by starting from the next command and decrease size to compensate
 
-	  gettimeofday(&end, NULL);
+	  gettimeofday(&end, NULL); // get end time
+
+    // Calculations
     sec = end.tv_sec - start.tv_sec;
-    msec = end.tv_usec - start.tv_sec;
-    if(msec < 0){ // computing for negative microseconds
+    usec = end.tv_usec - start.tv_usec;
+    if(usec < 0){ // computing for negative microseconds
         sec -= 1;
-        msec += 1;
+        usec += 1;
     }
-	  printf("Elapsed Time: %ld.%06ld\n", sec, msec); //end.tv_sec - start.tv_sec, end.tv_usec - start.tv_usec);
+	  printf("Elapsed Time: %ld.%06ld\n", sec, usec);
+
+    /* Clean-up */
+    for(int i = 0; i < size - 1; i++){
+        free(temp[i]);
+    }
+    free(temp);
 }
 
 void io(char **args, int size){
-    printf("IN IO FUNCTION\n");
-    int pid;
+    printf("IN IO FUNCTION - Fully tested and fully functional\n");
+    pid_t pid;
     if(pid = fork() == 0){ // child process
-        execution(args + 1, size - 1);
-        exit(0); //might not need this
-    }
-    else if(pid < 0){
-        perror("io fork error");
-        exit(0);
-    }
-    else{
+        // take out "io" and pass to execute function
+        char ** temp = (char **)calloc(size - 1, sizeof(char* *));
+        for(int i = 1; i < size; i++){
+            temp[i - 1] = (char *)calloc(strlen(args[i]) + 1, sizeof(char));
+            temp[i - 1] = args[i];
+        }
+        execution(temp, size - 1);
+        //echo(args + 1, size - 1);
+
         // create filepath /proc/<pid>/io
         FILE *fp;
-        char * start = "/proc/";
-        char * end = "/io";
-        char file[20]; // Assuming pid is no bigger than 10 digits
-        char * pidvalue = (char *) &pid; // convert int to char array
-        strcat(file, start);
-        strcat(file, pidvalue);
-        strcat(file, end);
+        char file[20] = "\0"; // This assumes pid with at max be 10 digits
+        sprintf(file,"/proc/%d/io", getpid());
 
-        // Testing correct values
-        printf("PID: %d\nPID String: %s\nFile: %s\n", pid, pidvalue, file);
-
+        // Open the file and read each line
         fp = fopen(file, "r");
         if(fp != NULL){
             char line[50]; // Assuming no more than 50 char per line
             while(fgets(line, 50, fp)){
-                //printf("%s\n", line); // Print each line of file (doing this if tokenizing doesnt work)
                 // Tokenize each line
                 int size = strlen(line);
                 int index = strchr(line, ':') - line + 1; // find index of : and index to next char
-                char * record = (char *)calloc(index + 1, sizeof(char));
-                char * value = (char *)calloc(size - index + 1, sizeof(char));
-                printf("%s%40s\n", record, value);
+                char * record = (char *)calloc(index + 2, sizeof(char));
+                char * value = (char *)calloc((size + 1) - (index + 1), sizeof(char));
+                strncpy(record, line, index + 1);
+                strncpy(value, line + index + 1, (size + 1) - (index + 1));
+
+                // Print in tabular format and free dynamic memory
+                printf("%-40s%s", record, value);
                 free(record);
                 free(value);
             }
         }
         else{
             perror("Could not open file in io");
-            exit(0);
         }
 
         /* Clean-up */
-        free(start);
-        free(end);
+        for(int i = 0; i < size - 1; i++){
+            free(temp[i]);
+        }
+        free(temp);
+        exit(0);
+    }
+    else if(pid < 0){ // Fork error
+        perror("io fork error");
+        B_exit(args, size);
+    }
+    else{ // Parent process
+        waitpid(pid, NULL, 0);
     }
 }
 
@@ -801,7 +1010,6 @@ void io(char **args, int size){
 
 char *strrev(char *str){
     int i = strlen(str) - 1, j = 0;
-
     char ch;
     while (i > j){
         ch = str[i];
