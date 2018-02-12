@@ -81,3 +81,31 @@
     i++;
     }
     size = size - 1;
+
+
+
+
+    printf("IN ENVVAR - need to test completely\n");
+    char env_var[200];
+    int a = 0;
+    for (int i = 0; i < strlen(cmdarray); i++){
+        if(cmdarray[i] == '$'){
+            for (int b = i; b < strlen(cmdarray); b++){
+                if(cmdarray[b] == '*' || cmdarray[b] == ' '){ //PARSE out the env_var so you can look it up using getenv
+                    break;
+                }
+                env_var[a] = cmdarray[b + 1];
+                a++;
+            }
+        }
+    }
+    //printf("%s", env_var);
+    char value[150] = {' '};
+    char *env_value;
+    for(int i = 0;i < strlen(env_var) - 1; i++) {
+        value[i] = env_var[i]; //have to get rid of null character because its a c string
+    }
+    // printf("%s\n", value);
+    env_value = getenv(value);
+     //Env value is saved in env_value if needed when you use it or you need to echo it
+    return env_value;
