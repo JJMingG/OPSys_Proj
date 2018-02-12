@@ -333,7 +333,7 @@ void Path_Res(char **cmdline, int size){
     char *checkit_tilda = (char *)calloc(15, sizeof(char *));
     for(int i = 0; i < size;i++){
         for(int a = 0; a < strlen(cmdline[i]); a++){
-            if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.' && done == 0){
+            if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.' ){
                 for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
                     if(cmdline[i][b] == '.'){
                     }
