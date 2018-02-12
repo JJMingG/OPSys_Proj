@@ -44,7 +44,7 @@ int main(){
     char *name;
     char input[226]; // array for user input
     char cwd[200]; // array for hold current directory
-    name=(char *)malloc(10*sizeof(char));
+    name= (char *)calloc(15, sizeof(char *));
     struct utsname uData;
     cuserid(name); // get current user
     uname(&uData); //get current machine name
@@ -276,7 +276,7 @@ void ParseIt(char* input){
 
     // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
-    envvar(cmdline, size);
+  //  envvar(cmdline, size);
     /* Execution process commands */
     if(strcmp(cmdline[0], "exit") == 0)
         B_exit(cmdline, size);
@@ -296,8 +296,9 @@ void ParseIt(char* input){
         io(cmdline, size);
     else if(strcmp(cmdline[0], "cd") == 0)
         cd(cmdline, size);
-    else
+    else{
   	    execution(cmdline, size);
+      }
 }
 
 void envvar(char **cmdline, int size){
@@ -307,7 +308,7 @@ for(int i = 0;i < size;i++){
   for(int c = 0;c < strlen(cmdline[i]);c++){
     if(cmdline[i][c] == '$')
       {
-      strncpy(temp,cmdline[i] + 1, strlen(cmdline[i]));
+  //    strncpy(temp,cmdline[i] + 1, strlen(cmdline[i]));
     important_index = i;
       }
     }
@@ -405,68 +406,68 @@ void Path_Res(char **cmdline, int size){
             }
         }
 
-        int semi_counter = 0;
-        int load_index = 0;
-        char* Path_init = (char *)calloc(strlen(getenv("PATH")), sizeof(char *));
-        Path_init = getenv("PATH");
-    //   printf("%s\n", Path_init);
-        for(int i = 0; i < strlen(Path_init); i++){
-            if(Path_init[i] == ':'){
-                semi_counter++;
-            }
+    }
+    int semi_counter = 0;
+    int load_index = 0;
+    char* Path_init = (char *)calloc(strlen(getenv("PATH")), sizeof(char *));
+    Path_init = getenv("PATH");
+//   printf("%s\n", Path_init);
+    for(int i = 0; i < strlen(Path_init); i++){
+        if(Path_init[i] == ':'){
+            semi_counter++;
         }
-        int index[semi_counter];
-       index[0] = -1;
-        for(int i = 1; i < strlen(Path_init); i++){
-            if(Path_init[i] ==':'){
-                index[load_index]  = i;
-                load_index++;
-            }
+    }
+    int index[semi_counter];
+   index[0] = -1;
+    for(int i = 1; i < strlen(Path_init); i++){
+        if(Path_init[i] ==':'){
+            index[load_index]  = i;
+            load_index++;
         }
-        index[semi_counter] = (strlen(Path_init) - 1);
-        for(int i = 0; i < semi_counter + 1;i++){
+    }
+    index[semi_counter] = (strlen(Path_init) - 1);
+    for(int i = 0; i < semi_counter + 1;i++){
 
-          //printf("%d\n", index[i]);
+      //printf("%d\n", index[i]);
+    }
+    char ** Path_paths = (char **)calloc(semi_counter, sizeof(char **));
+    for(int a = 0; a < semi_counter;a++){
+        Path_paths[a] = (char *)calloc(50, sizeof(char *));
+        if(a == 0){
+            strncpy(Path_paths[a], Path_init, index[a]);
         }
-        char ** Path_paths = (char **)calloc(semi_counter, sizeof(char **));
-        for(int a = 0; a < semi_counter;a++){
-            Path_paths[a] = (char *)calloc(50, sizeof(char *));
-            if(a == 0){
-                strncpy(Path_paths[a], Path_init, index[a]);
-            }
-          else if (a < semi_counter){
-                strncpy(Path_paths[a], Path_init + index[a] + 1, index[a + 1] - index[a] - 1);
-           }
+      else if (a < semi_counter){
+            strncpy(Path_paths[a], Path_init + index[a] + 1, index[a + 1] - index[a] - 1);
+       }
+    }
+    int cmd_index = 0;
+    char* command = (char *)calloc(10, sizeof(char *));
+    for(int i = 0; i < size;i++){
+        char* noback  = strchr(cmdline[i], '/');
+        char* noarrowone = strchr(cmdline[i], '<');
+        char* noarrowtwo = strchr(cmdline[i], '>');
+        char* nopipe = strchr(cmdline[i], '|');
+        if (noback == NULL){
+          command = cmdline[i];
+        cmd_index  = i;
         }
-        int cmd_index = 0;
-        char* command = (char *)calloc(10, sizeof(char *));
-        for(int i = 0; i < size;i++){
-            char* noback  = strchr(cmdline[i], '/');
-            char* noarrowone = strchr(cmdline[i], '<');
-            char* noarrowtwo = strchr(cmdline[i], '>');
-            char* nopipe = strchr(cmdline[i], '|');
-            if (noback == NULL){
-              command = cmdline[i];
-            cmd_index  = i;
-            }
-        }
-        for(int a = 0; a < semi_counter; a++){
-          strcat(Path_paths[a], "/");
-          strcat(Path_paths[a], command);
-          //printf("%s\n",Path_paths[a]);
-        }
-        int all_failed = 0;
-        for(int a = 0; a < semi_counter; a++){
-        FILE* did_open = fopen(Path_paths[a], "r");
-        if(did_open != NULL){
-          fclose(did_open);
-          strcpy(cmdline[cmd_index], Path_paths[a]);
-          all_failed++;
-          }
-        }
-        if(all_failed == 0){
-          printf("No Match in Path was found, start execution\n");
-        }
+    }
+    for(int a = 0; a < semi_counter; a++){
+      strcat(Path_paths[a], "/");
+      strcat(Path_paths[a], command);
+      //printf("%s\n",Path_paths[a]);
+    }
+    int all_failed = 0;
+    for(int a = 0; a < semi_counter; a++){
+    FILE* did_open = fopen(Path_paths[a], "r");
+    if(did_open != NULL){
+      fclose(did_open);
+      strcpy(cmdline[cmd_index], Path_paths[a]);
+      all_failed++;
+      }
+    }
+    if(all_failed == 0){
+      printf("No Match in Path was found, start execution\n");
     }
 }
 
