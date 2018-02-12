@@ -26,7 +26,7 @@
 #include <fcntl.h>
 
 void ParseIt(char* input);
-char* envvar(char *cmdarray);
+void envvar(char **cmdline, int size);
 void Path_Res(char **cmdarray, int size);
 void pipeexe(char **cmdline, int size, int numpipes);
 void redirection(char **cmdline, int size);
@@ -276,6 +276,7 @@ void ParseIt(char* input){
 
     // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
+    envvar(cmdline, size);
     /* Execution process commands */
     if(strcmp(cmdline[0], "exit") == 0)
         B_exit(cmdline, size);
@@ -299,31 +300,23 @@ void ParseIt(char* input){
   	    execution(cmdline, size);
 }
 
-char* envvar(char *cmdarray){
-    printf("IN ENVVAR - need to test completely\n");
-    char env_var[200];
-    int a = 0;
-    for (int i = 0; i < strlen(cmdarray); i++){
-        if(cmdarray[i] == '$'){
-            for (int b = i; b < strlen(cmdarray); b++){
-                if(cmdarray[b] == '*' || cmdarray[b] == ' '){ //PARSE out the env_var so you can look it up using getenv
-                    break;
-                }
-                env_var[a] = cmdarray[b + 1];
-                a++;
-            }
-        }
+void envvar(char **cmdline, int size){
+  int important_index = 0;
+  char * temp = (char *)calloc(15, sizeof(char *));
+for(int i = 0;i < size;i++){
+  for(int c = 0;c < strlen(cmdline[i]);c++){
+    if(cmdline[i][c] == '$')
+      {
+      strncpy(temp,cmdline[i] + 1, strlen(cmdline[i]));
+    important_index = i;
+      }
     }
-    //printf("%s", env_var);
-    char value[150] = {' '};
-    char *env_value;
-    for(int i = 0;i < strlen(env_var) - 1; i++) {
-        value[i] = env_var[i]; //have to get rid of null character because its a c string
-    }
-    // printf("%s\n", value);
-    env_value = getenv(value);
-     //Env value is saved in env_value if needed when you use it or you need to echo it
-    return env_value;
+    printf("%s\n", temp);
+  temp  = getenv(temp);
+
+  cmdline[important_index]  = temp;
+  printf("%s\n", cmdline[important_index]);
+  }
 }
 
 void Path_Res(char **cmdline, int size){
@@ -732,13 +725,13 @@ void cd(char **args, int size){
 	  if(size < 2){ // If no args, $HOME is the arg
         //args[1] = envvar("$HOME"); // Pass through env_var and copy to args[1]
         char* Home = "$HOME";
-        if(chdir(envvar(Home)) != 0){
+        //if(chdir(envvar(Home)) != 0){
             perror("Error changing directory to $HOME");
             B_exit(args, size);
-        }
-        if(setenv("PWD", envvar("$HOME"), 1) != 0){
+        //}
+        //if(setenv("PWD", envvar("$HOME"), 1) != 0){
             perror("Unable to set $PWD");
-	      }
+	    //  }
     }
 	  // Signals error if target is not a directory
     // Path resolution is predetermined already
@@ -765,7 +758,7 @@ void echo(char **args, int size){
         if (args[i][0] == '$'){
             // environmental variable
             //printf("HERE is %s\n", envvar(args[i]));
-            printf("%s ", envvar(args[i]));
+          //  printf("%s ", envvar(args[i]));
             // envvar will print out error message if it does not exist
             i++; // arg is in next index after the $ so increment to skip
         }
