@@ -44,7 +44,9 @@
       - Environmental Variables
           -
       - Path Resolution
-          -
+          - This does not work with directories/files without anything in front
+            it. For example, cmd directory will only work with directory, but
+            cmd ./directory will work with /home/majors/usr/directory.
       - I/O Redirection
           1. Not necessarily a bug, but when output redirection creates a file,
              you will need to chmod the file in order to check the contents of
