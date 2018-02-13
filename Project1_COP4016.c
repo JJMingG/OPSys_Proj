@@ -1,19 +1,5 @@
-/* Progress remaining:
- * - Need parsing to parse out spaces correct and not have empty values in 2d array
- *        - cmd (cmd + space) creates two pointers instead of only one
- * - Path resolution function
- * - Background Processes
- * - Test each function, particularly:
- *        - cd (setenv and when path resolution is done)
- *        - envvar FUNCTION
- *        - Path resolutions
- *        - background processes
- *        - execution with path resolutions
- *        - spacing with functions
- * - Create Makefile
- * - Write up README file
- * - Clean up comments, printf, etc
- * - Get rid of warnings if possible, currently 2
+/* COP4610 Operating Systems - Implementing C Shell
+ * Written by Jamine Guo, Evan Schwalb, and Bob King
  */
 
 #include <stdio.h>
@@ -39,6 +25,18 @@ void cd(char **args, int size);
 void echo(char **args, int size);
 void etime(char **args, int size);
 void io(char **args, int size);
+
+/* This was created for the background processing and is commented it because it
+ * is not fully functional
+
+struct Node {
+	char *cmd;
+	pid_t pid;
+	int position;
+	struct Node *next;
+	struct Node *prev;
+};//end of node
+*/
 
 int main(){
     char *name;
@@ -273,10 +271,10 @@ void ParseIt(char* input){
     Path_Res(cmdline, size);
     envvar(cmdline, size);
 
-    /* Testing */
+    /* Testing
     for(int z = 0; z < size; z++)
         printf("content z: %s\n", cmdline[z]);
-
+    */
 
     /* Execution process commands */
     if(strcmp(cmdline[0], "exit") == 0)
@@ -318,13 +316,11 @@ void envvar(char **cmdline, int size){
 }
 
 void Path_Res(char **cmdline, int size){
-    printf("In path resolution - Not finished and need to test\n");
     int done = 0;
     int cmdline_counter_double_dot = 0;
     int cmdline_counter_single_dot = 0;
     int cmdline_tilda = 0;
-    //A bunch of variables need for getting the path resolution
-    char *Pwd_holder_double_dot = (char *)calloc(15, sizeof(char *));
+    char *Pwd_holder_double_dot = (char *)calloc(15, sizeof(char *));//A bunch of variables need for getting the path resolution
     char *Pwd_holder_single_dot = (char *)calloc(15, sizeof(char *));
     char *Pwd_holder_tilda = (char *)calloc(15, sizeof(char *));
     char *checkit = (char *)calloc(15, sizeof(char *));
@@ -354,9 +350,14 @@ void Path_Res(char **cmdline, int size){
                     }
                 }
                 strrev(checkit);
+                if(done >= 1){
+                  strrev(checkit);
+                }
                 strcat(checkit, cmdline[i]);
                 free(cmdline[i]);
                 cmdline[i] = checkit;//Final needed thing in cmdline[i]
+                //printf("%s\n", cmdline[i]);
+                done++;
             }
             if(cmdline[i][a] == '.'){
                 for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
@@ -371,6 +372,11 @@ void Path_Res(char **cmdline, int size){
                 strcat(Pwd_holder_single_dot, cmdline[i]);//
                 free(cmdline[i]);
                 cmdline[i] = Pwd_holder_single_dot;
+                if( done >= 1){
+                  strrev(cmdline[i]);
+                }
+                //printf("%s\n", cmdline[i]);
+                done++;
             }
             if(cmdline[i][a] == '~'){//looks for the home and adds that on the end
                 for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
@@ -398,6 +404,8 @@ void Path_Res(char **cmdline, int size){
                 strcat(checkit_tilda, cmdline[i]);
                 free(cmdline[i]);
                 cmdline[i] = checkit_tilda;
+                //printf("%s\n", cmdline[i]);//put home on the end
+                done++;
             }
         }
     }
@@ -425,9 +433,9 @@ void Path_Res(char **cmdline, int size){
         if(a == 0){
             strncpy(Path_paths[a], Path_init, index[a]);
         }
-        else if (a < semi_counter){
+      else if (a < semi_counter){
             strncpy(Path_paths[a], Path_init + index[a] + 1, index[a + 1] - index[a] - 1);
-        }
+       }
     }
     int cmd_index = 0;
     char* command = (char *)calloc(10, sizeof(char *));
@@ -436,33 +444,46 @@ void Path_Res(char **cmdline, int size){
         char* noarrowone = strchr(cmdline[i], '<');
         char* noarrowtwo = strchr(cmdline[i], '>');
         char* nopipe = strchr(cmdline[i], '|');
+        char* nospace = strchr(cmdline[i], ' ');
         if (noback == NULL && noarrowone == NULL && noarrowtwo == NULL && nopipe == NULL){
-            command = cmdline[i];
-        cmd_index  = i;
+            command = cmdline[0];
+            cmd_index  = i;
         }
     }
     for(int a = 0; a < semi_counter; a++){
         strcat(Path_paths[a], "/");
         strcat(Path_paths[a], command);
+        //printf("%s\n", Path_paths[a]);
     }
     int all_failed = 0;
     for(int a = 0; a < semi_counter; a++){
         FILE* did_open = fopen(Path_paths[a], "r");
         if(did_open != NULL){
             fclose(did_open);
-            if(size >= 2){
-                strcpy(cmdline[cmd_index - 1], Path_paths[a]);
+            if(strcmp(cmdline[cmd_index], ">") != 0 && strcmp(cmdline[cmd_index], "<") != 0){
+                if(done > 0){
+                    strcpy(cmdline[0], Path_paths[a]);
+                }
+                else if(strcmp(cmdline[cmd_index], "|") == 0){
+                    strcpy(cmdline[cmd_index - 3], Path_paths[a]);
+                }
+                else if(size > 2){
+                    strcpy(cmdline[cmd_index - size/2 - 1], Path_paths[a]);
+                }
+                else if(size == 2){
+                    strcpy(cmdline[cmd_index - 1], Path_paths[a]);
+                }
+                else{
+                    strcpy(cmdline[cmd_index], Path_paths[a]);
+                }
             }
-            else {
-                strcpy(cmdline[cmd_index], Path_paths[a]);
-            }//test each thing in path
+            //printf("%s\n", cmdline[cmd_index]);//test each thing in path
             all_failed++;
         }
     }
 }
 
 void pipeexe(char **cmdline, int size, int numpipes){
-    printf("In pipe function - functional and tested\n");
 	  /* parse based on pipelines */
 	  int index[numpipes + 2]; // +2 to compensate the begining and end which shouldn't have pipes.
 	  int indexcounter = 1;
@@ -588,7 +609,6 @@ void pipeexe(char **cmdline, int size, int numpipes){
 }
 
 void redirection(char **cmdline, int size){
-    printf("IN REDIRECTION FUNCTION - Completely tested with echo but not execution\n");
     /* Indexing of redirections */
     int index = 0; // Only need index for 1 redirection as stated by WenQi
     for(int i = 0; i < size; i++){
@@ -669,10 +689,10 @@ void redirection(char **cmdline, int size){
 
 void execution(char **cmdline, int size){
     int pid;
-    /* Testing */
+    /* Testing
     for(int i = 0; i < size; i++){
         printf("content in execution: %s\n", cmdline[i]);
-    }
+    }*/
     if(pid = fork() == 0){ // Child process
         /* - List of Execution Processes -
          * Built-ins are checked again despite being checked for in the parsing
@@ -703,6 +723,30 @@ void execution(char **cmdline, int size){
     else{ // Parent process
         waitpid(pid, NULL, 0);
     }
+
+    /* This was created for the background processing and is commented it because it
+     * is not fully functional */
+
+    //**************ACTS AS PART OF BACKGROUND PROCESSES
+    /*    if((pid2 == waitpid(-1, &count, WNOHANG)) == 0) {
+       printf("[%d]+  [%d]\n",
+              WEXITSTATUS(count),pid2);
+              }
+    if((pid2 = waitpid(-1, &count, WNOHANG)) > 0) {
+      printf("[%d]+  [%s]\n",
+              WEXITSTATUS(count),temp);
+              execv(cmdline[0], cmdline);
+        deleteNode(&head, head->next);
+        //call background process function instead and use it to pop LL }
+    // printf()
+
+    This is the second and final part of the background processing.
+    It is meant to go after the child and parent processes are done,
+    executing the background processes in the linked list. After finishing
+    it would print output. It is using a second pid in order to not mess
+    with other processes. The waitpid's in the if statements may not be
+    correct
+    */
 }
 
 /* Built-ins */
@@ -841,67 +885,6 @@ void io(char **args, int size){
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 char *strrev(char *str){
     int i = strlen(str) - 1, j = 0;
     char ch;
@@ -915,41 +898,45 @@ char *strrev(char *str){
     return str;
 }
 
+/* This was created for the background processing and is commented it because it
+ * is not fully functional */
 
+/* Given a reference (pointer to pointer) to the head of a list
+   and an int, inserts a new node on the front of the list. */
+//void push(struct Node** head_ref, char * line, int a, int pos)
+//{
+    /* 1. allocate node */
+//    struct Node* new_node = (struct Node*) malloc(sizeof(struct Node));
+    /* 2. put in the data  */
+//    new_node->cmd  = line;
+//		new_node->pid  = a;
+//    new_node->position= pos;
+    /* 3. Make next of new node as head and previous as NULL */
+//    new_node->next = (*head_ref);
+//    new_node->prev = NULL;
+    /* 4. change prev of head node to new node */
+//    if((*head_ref) !=  NULL)
+//      (*head_ref)->prev = new_node ;
+    /* 5. move the head to point to the new node */
+//    (*head_ref)= new_node;
+//}
 
-
-
-
-
-/*
-char newpath[250] = {};
-char cwd[200] = {};
-char parendir[200] = {};
-int trackerforparen = 0;
-int backslashtrack = 0;
-for (int b = 0; b < strlen(cmdarray); b++){
-newpath[b] = cmdarray[i + 2];
-if(cmdarray[i] == '*' || cmdarray[i] == ' ' || &cmdarray[i] == NULL){
-  break;
-      }
-      i++;//remove first to top dots
-    }
-    //printf("%s", newpath);
-   if (getcwd(cwd, sizeof(cwd)) == NULL){
-      perror("getcwd() error");
-     }
-    else{
-     //printf( "%s", cwd);
-    //fprintf(stdout, "%s", direc);
-  }
- //newpath now contains the file pathway you need for whatever your function
-  //you're using it for
-  printf("%s", newpath);
-
-
-
-  }
-
-
-
-  */
+//void deleteNode(struct Node **head_ref, struct Node *del)
+//{
+  /* base case */
+//  if(*head_ref == NULL || del == NULL)
+//    return;
+  /* If node to be deleted is head node */
+//  if(*head_ref == del)
+//    *head_ref = del->next;
+  /* Change next only if node to be deleted is NOT the last node */
+//  if(del->next != NULL)
+//    del->next->prev = del->prev;
+  /* Change prev only if node to be deleted is NOT the first node */
+//  if(del->prev != NULL)
+//    del->prev->next = del->next;
+  /* Finally, free the memory occupied by del*/
+//  free(del);
+//  return;
+//}
+// deleteNode(&head, head->next);  --------->delete last node
