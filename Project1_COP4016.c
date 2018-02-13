@@ -115,7 +115,7 @@ void ParseIt(char* input){
                     break;
                 }
                 else{
-                    cmdarray[++cmd_array_counter] = '*';
+                    cmdarray[++cmd_array_counter] = '*';//add an asterisk instead of spaces
                 }
                 cmd_array_counter++;
             }
@@ -151,7 +151,7 @@ void ParseIt(char* input){
     char * cmd3 = (char *)calloc(15, sizeof(char *));
     char * cmd4 = (char *)calloc(15, sizeof(char *));
     char * cmd5 = (char *)calloc(15, sizeof(char *));
-    char * cmd6 = (char *)calloc(15, sizeof(char *));
+    char * cmd6 = (char *)calloc(15, sizeof(char *));//Have to allocate a bunch of pointers in order to fill the ** array
     char * cmd7 = (char *)calloc(15, sizeof(char *));
     char * cmd8 = (char *)calloc(15, sizeof(char *));
     char * cmd9 = (char *)calloc(15, sizeof(char *));
@@ -176,7 +176,7 @@ void ParseIt(char* input){
             cmd2counter++;
             if(cmdarray[i + 1] == '*' || i == (strlen(cmdarray) - 1)){
                 cmdline[size] = cmd2;
-                size = size + 1;
+                size = size + 1; // gets each cmd and puts them into cmdline
                 numofcommand++;
             }
         }
@@ -277,7 +277,7 @@ void ParseIt(char* input){
     // Call path resolution function to predefine paths before executing
     Path_Res(cmdline, size);
     envvar(cmdline, size);
-  
+
     /* Execution process commands */
     if(strcmp(cmdline[0], "exit") == 0)
         B_exit(cmdline, size);
@@ -303,21 +303,20 @@ void ParseIt(char* input){
 }
 
 void envvar(char **cmdline, int size){
+  char * temp;
+
     printf("IN ENV_VAR - need to completely test\n");
     for(int i = 0;i < size;i++){
+      temp = (char *)calloc(strlen(cmdline[i]), sizeof(char));
         if(cmdline[i][0] == '$'){
-            char * temp = (char *)calloc(strlen(cmdline[i]), sizeof(char));
+            char * temp = (char *)calloc(strlen(cmdline[i]), sizeof(char));//Get a environemnt variable, and replace it 
             strncpy(temp, cmdline[i] + 1, strlen(cmdline[i]));
             temp = getenv(temp);
             cmdline[i]  = temp;
         }
     }
-    printf("%s\n", temp);
-  temp  = getenv(temp);
+    printf("%s\n", temp);;
 
-  cmdline[important_index]  = temp;
-  printf("%s\n", cmdline[important_index]);
-  }
 }
 
 void Path_Res(char **cmdline, int size){
@@ -326,7 +325,7 @@ void Path_Res(char **cmdline, int size){
     int cmdline_counter_double_dot = 0;
     int cmdline_counter_single_dot = 0;
     int cmdline_tilda = 0;
-    char *Pwd_holder_double_dot = (char *)calloc(15, sizeof(char *));
+    char *Pwd_holder_double_dot = (char *)calloc(15, sizeof(char *));//A bunch of variables need for getting the path resolution
     char *Pwd_holder_single_dot = (char *)calloc(15, sizeof(char *));
     char *Pwd_holder_tilda = (char *)calloc(15, sizeof(char *));
     char *checkit = (char *)calloc(15, sizeof(char *));
@@ -335,7 +334,7 @@ void Path_Res(char **cmdline, int size){
         for(int a = 0; a < strlen(cmdline[i]); a++){
             if(cmdline[i][a] == '.' && cmdline[i][a+1] == '.' ){
                 for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
-                    if(cmdline[i][b] == '.'){
+                    if(cmdline[i][b] == '.'){ //check to see if its a single dot
                     }
                     else {
                         cmdline[i][cmdline_counter_double_dot] = cmdline[i][b];
@@ -343,7 +342,7 @@ void Path_Res(char **cmdline, int size){
                     }
                 }
                 Pwd_holder_double_dot = getenv("PWD");
-                strrev(Pwd_holder_double_dot);
+                strrev(Pwd_holder_double_dot);//Method in order to copy it over
                 int boi = 0;
                 int checkit_counter = 0;
                 for(int b = 0;b < strlen(Pwd_holder_double_dot); b++){
@@ -358,7 +357,7 @@ void Path_Res(char **cmdline, int size){
                 strrev(checkit);
                 strcat(checkit, cmdline[i]);
                 free(cmdline[i]);
-                cmdline[i] = checkit;
+                cmdline[i] = checkit;//Final needed thing in cmdline[i]
                 printf("%s\n", cmdline[i]);
             }
             if(cmdline[i][a] == '.'){
@@ -366,17 +365,17 @@ void Path_Res(char **cmdline, int size){
                     if(cmdline[i][b] == '.'){
                     }
                     else {
-                        cmdline[i][cmdline_counter_single_dot] = cmdline[i][b];
+                        cmdline[i][cmdline_counter_single_dot] = cmdline[i][b];//look for a double dot
                         cmdline_counter_single_dot++;
                     }
                 }
                 Pwd_holder_single_dot = getenv("PWD");
-                strcat(Pwd_holder_single_dot, cmdline[i]);
+                strcat(Pwd_holder_single_dot, cmdline[i]);//
                 free(cmdline[i]);
                 cmdline[i] = Pwd_holder_single_dot;
                 printf("%s", cmdline[i]);
             }
-            if(cmdline[i][a] == '~'){
+            if(cmdline[i][a] == '~'){//looks for the home and adds that on the end
                 for(int b = 0; b < (strlen(cmdline[i]) + 1); b++){
                     if(cmdline[i][b] == '~'){
                     }
@@ -402,7 +401,7 @@ void Path_Res(char **cmdline, int size){
                 strcat(checkit_tilda, cmdline[i]);
                 free(cmdline[i]);
                 cmdline[i] = checkit_tilda;
-                printf("%s\n", cmdline[i]);
+                printf("%s\n", cmdline[i]);//put home on the end
             }
         }
 
@@ -456,9 +455,12 @@ void Path_Res(char **cmdline, int size){
         FILE* did_open = fopen(Path_paths[a], "r");
         if(did_open != NULL){
             fclose(did_open);
-            strcpy(cmdline[cmd_index], Path_paths[a]);
+            strcpy(cmdline[cmd_index], Path_paths[a]);//test each thing in path
             all_failed++;
         }
+    }
+    if(all_failed == 0){
+      printf("No valid match was found ");
     }
 }
 
