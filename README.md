@@ -14,6 +14,7 @@
           - Parsing (Part 1)
           - Environmental Variables (Part 2)
           - Path Resolution (Part 4)
+          - Makefile
       - Bob King
           - Background Processing (Part 8)
 
@@ -26,11 +27,11 @@
 
 ## How to compile executable using Makefile
       - To build:
-          - TBD
+          - Make
       - To clean:
-          - TBD
+          - make clean
       - To run test:
-          - TBD
+          - ./Proj1
 
 ## Known bugs and unfinished portions of the project
       - Parsing
@@ -74,3 +75,5 @@
       - This shell compensates for more than 3 pipelines.
       - io function assumes that pid will be no greater than 10 digits
       - Execution function assumes first argument (cmdline[0]) is the command
+      - For background processing, the & is assumed to have a space before or
+        after it, meaning that it is tokenized by itself.
