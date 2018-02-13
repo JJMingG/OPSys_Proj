@@ -27,11 +27,11 @@
 
 ## How to compile executable using Makefile
       - To build:
-          - Make
+          - make
       - To clean:
           - make clean
       - To run test:
-          - ./Proj1
+          - ./proj1
 
 ## Known bugs and unfinished portions of the project
       - Parsing
@@ -42,18 +42,20 @@
              function which looks at args[1] if it has a size greater than 1.
              When testing, please refrain from adding a space at the end of the
              input (multiple spaces in the middle of input is fine).
-      - Environmental Variables
-          -
       - Path Resolution
-          - This does not work with directories/files without anything in front
-            it. For example, cmd directory will only work with directory, but
-            cmd ./directory will work with /home/majors/usr/directory.
+          1. This does not work with directories/files without anything in front
+             it. For example, cmd directory will only work with directory, but
+             cmd ./directory will work with /home/majors/usr/directory.
+          2. The path resolution works for cmds such as ls (/usr/bin/ls) when it is by
+             itself but not when there are more arguments. It does not look for path
+             resolution of ls when it as more arguments, such as flags.
       - I/O Redirection
-          1. Not necessarily a bug, but when output redirection creates a file,
-             you will need to chmod the file in order to check the contents of
-             the file. This was not necessarily specified that it had to be
-             changed so I (Jamine) did not do anything to change this. Otherwise,
-             this function works correctly.
+          1. The output redirection creates a file but it does not create correctly due
+             to the problem of path resolution bug 1.
+                - For example: current working directory is /home/usr/COP4610, the output
+                  to create output.txt will result in a path resolution of
+                  /home/udr/COP4610outputtxt. The file does create but in the parent
+                  directory with the sample above name.
       - Background Processing
           -
       - Built-ins
@@ -65,7 +67,8 @@
           2. Implicit declaration of setenv
               - Looked up the warning, which mentioned that we need to define
                 DEFAULT_SOURCE, BSD_SOURCE, or POSIX_C_SOURCE, but they did not
-                get rid of the warning.
+                get rid of the warning. We see this warning on linprog but not from
+                another machine environment.
 
 ## Special considerations, etc
       - We used a dynamically allocated 2d array to store and array of pointers
@@ -74,6 +77,5 @@
         arguments.
       - This shell compensates for more than 3 pipelines.
       - io function assumes that pid will be no greater than 10 digits
-      - Execution function assumes first argument (cmdline[0]) is the command
       - For background processing, the & is assumed to have a space before or
         after it, meaning that it is tokenized by itself.
